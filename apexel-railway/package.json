@@ -9,7 +9,7 @@
   "scripts": {
     "start": "node server.js",
     "start:bot": "node bot.js",
-    "start:all": "node server.js & node bot.js"
+    "start:all": "npx concurrently \"node server.js\" \"node bot.js\""
   },
   "dependencies": {
     "better-sqlite3": "^11.0.0"
