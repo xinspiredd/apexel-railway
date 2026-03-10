@@ -1038,7 +1038,7 @@ route('GET', '/api/leaderboard', async (req, res) => {
 // ─── TAGS ──────────────────────────────────────────────────────
 route('GET', '/api/tags/popular', async (req, res) => {
   // Count all tags across all builds, return top 20
-  const builds = db.prepare('SELECT tags FROM builds WHERE tags != ""').all();
+  const builds = db.prepare("SELECT tags FROM builds WHERE tags IS NOT NULL AND tags != ''").all();
   const freq = {};
   builds.forEach(b => {
     (b.tags || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean).forEach(t => {
