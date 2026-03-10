@@ -1,6 +1,6 @@
 {
   "name": "apexel",
-  "version": "1.0.1",  // ← УВЕЛИЧЬТЕ ВЕРСИЮ!
+  "version": "1.0.2",  // ← УВЕЛИЧЬТЕ ВЕРСИЮ!
   "description": "APEXEL-NFSWorld Community Platform",
   "main": "server.js",
   "engines": {
