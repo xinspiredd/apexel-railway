@@ -1,10 +1,7 @@
 [build]
-  builder = "nixpacks"
+builder = "DOCKERFILE"
 
 [deploy]
-  startCommand = "node server.js"
-  restartPolicyType = "on_failure"
-  restartPolicyMaxRetries = 3
-
-[[services]]
-  name = "apexel-server"
+startCommand = "node server.js"
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
