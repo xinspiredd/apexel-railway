@@ -1,6 +1,5 @@
 /**
- * APEXEL Backend — Node.js built-ins only
- * Node 22+ (native SQLite, crypto, http)
+ * APEXEL Backend — with better-sqlite3
  */
 'use strict';
 
@@ -8,7 +7,7 @@ const http     = require('http');
 const fs       = require('fs');
 const path     = require('path');
 const crypto   = require('crypto');
-const { DatabaseSync } = require('node:sqlite');
+const Database = require('better-sqlite3');
 
 // ─── CONFIG ──────────────────────────────────────────────────
 const PORT     = process.env.PORT || 3000;
@@ -21,9 +20,9 @@ if (process.env.JWT_SECRET) {
   JWT_SECRET = fs.readFileSync(SECRET_FILE, 'utf8').trim();
 } else {
   JWT_SECRET = crypto.randomBytes(32).toString('hex');
-  try { fs.writeFileSync(SECRET_FILE, JWT_SECRET); } catch {} // read-only FS on some hosts
+  fs.writeFileSync(SECRET_FILE, JWT_SECRET);
 }
-const STATIC_DIR = path.resolve(__dirname, process.env.STATIC_DIR || 'public');
+const STATIC_DIR = path.resolve(__dirname, '../outputs');  // serve index.html etc
 
 // ─── TELEGRAM BOT CONFIG ──────────────────────────────────────────
 const BOT_CFG_FILE = path.join(__dirname, 'bot.config.json');
@@ -31,22 +30,14 @@ let BOT_CFG = {};
 if (fs.existsSync(BOT_CFG_FILE)) {
   try { BOT_CFG = JSON.parse(fs.readFileSync(BOT_CFG_FILE, 'utf8')); } catch {}
 }
-// Allow env vars to override config file (for Railway/cloud hosting)
-if (process.env.BOT_TOKEN)    BOT_CFG.BOT_TOKEN    = process.env.BOT_TOKEN;
-if (process.env.API_SECRET)   BOT_CFG.API_SECRET   = process.env.API_SECRET;
-if (process.env.BOT_USERNAME) BOT_CFG.BOT_USERNAME = process.env.BOT_USERNAME;
 const BOT_INTERNAL_PORT = process.env.BOT_PORT   || BOT_CFG.API_PORT   || 3001;
 const BOT_SECRET        = process.env.API_SECRET  || BOT_CFG.API_SECRET || 'apexel_bot_secret';
 const BOT_ENABLED       = !!process.env.BOT_TOKEN  || !!BOT_CFG.BOT_TOKEN;
-// On Railway: mount persistent volume at /data
-// Set RAILWAY_VOLUME_MOUNT_PATH=/data in Railway env vars
-const DB_FILE = process.env.DB_PATH || 
-                (process.env.RAILWAY_VOLUME_MOUNT_PATH ? process.env.RAILWAY_VOLUME_MOUNT_PATH + '/apexel.db' : 
-                path.resolve(__dirname, 'apexel.db'));
+const DB_FILE    = path.resolve(__dirname, 'apexel.db');
 
 // ─── DATABASE ─────────────────────────────────────────────────
-const db = new DatabaseSync(DB_FILE);
-db.exec(`PRAGMA journal_mode=WAL;`);
+const db = new Database(DB_FILE);
+db.pragma('journal_mode = WAL');
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS users (
