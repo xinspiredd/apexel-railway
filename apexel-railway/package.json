@@ -1,0 +1,17 @@
+{
+  "name": "apexel",
+  "version": "1.0.0",
+  "description": "APEXEL — NFS World Community Platform",
+  "main": "server.js",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "start:bot": "node bot.js",
+    "start:all": "node server.js & node bot.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

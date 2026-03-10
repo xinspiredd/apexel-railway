@@ -1,0 +1,23 @@
+# Database (stored on persistent volume on Railway)
+*.db
+*.db-shm
+*.db-wal
+
+# Secrets
+.jwt_secret
+bot.config.json
+
+# Uploads (stored on persistent volume)
+uploads/
+
+# Video (too large for git — upload separately)
+*.mp4
+*.webm
+
+# System
+node_modules/
+.env
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
