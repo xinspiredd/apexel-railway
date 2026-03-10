@@ -22,7 +22,7 @@ if (process.env.JWT_SECRET) {
   JWT_SECRET = crypto.randomBytes(32).toString('hex');
   fs.writeFileSync(SECRET_FILE, JWT_SECRET);
 }
-const STATIC_DIR = path.resolve(__dirname, '../outputs');  // serve index.html etc
+const STATIC_DIR = path.resolve(__dirname, 'public');  // ← ИСПРАВЛЕНО: теперь указывает на папку public
 
 // ─── TELEGRAM BOT CONFIG ──────────────────────────────────────────
 const BOT_CFG_FILE = path.join(__dirname, 'bot.config.json');
