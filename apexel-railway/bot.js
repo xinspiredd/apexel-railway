@@ -27,7 +27,7 @@ if (fs.existsSync(CFG_FILE)) {
   try { cfg = JSON.parse(fs.readFileSync(CFG_FILE, 'utf8')); } catch {}
 }
 
-const BOT_TOKEN  = process.env.BOT_TOKEN  || cfg.BOT_TOKEN  || '';
+const BOT_TOKEN  = process.env.BOT_TOKEN  || cfg.BOT_TOKEN  || '8697876280:AAFDB8I_yuUIqgIXBwC2p6dJDbT8E8_k1k';
 const API_SECRET = process.env.API_SECRET || cfg.API_SECRET || 'apexel_bot_secret';
 const API_PORT   = process.env.API_PORT   || cfg.API_PORT   || 3001; // internal bot↔server port
 const MAIN_PORT  = process.env.MAIN_PORT  || cfg.MAIN_PORT  || 3000; // main server port
