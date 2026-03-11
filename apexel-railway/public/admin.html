@@ -1330,7 +1330,12 @@ body { overflow: hidden; }
     <div class="section">
       <div class="section-head">
         <div class="section-head-title">Пользователи и права</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:.12em;color:var(--mu)"><span id="usersTableCount">0</span> записей</div>
+        <div style="display:flex;align-items:center;gap:.8rem">
+          <input type="text" id="userSearchInput" placeholder="Поиск по имени / email..."
+            oninput="filterUsersTable(this.value)"
+            style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:#fff;padding:.35rem .7rem;border-radius:4px;font-size:.8rem;font-family:'Barlow',sans-serif;width:200px;outline:none">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:.12em;color:var(--mu)"><span id="usersTableCount">0</span> записей</div>
+        </div>
       </div>
       <div style="overflow-x:auto; overflow-y:auto; max-height:420px; border: 1px solid rgba(255,255,255,.05);">
         <table class="users-table" id="usersTable" style="min-width:560px">
@@ -1604,6 +1609,19 @@ function getActiveBanned() {
 // ============================================================
 //  DASHBOARD
 // ============================================================
+function filterUsersTable(query) {
+  query = (query || '').toLowerCase().trim();
+  var rows = document.querySelectorAll('#usersTableBody tr');
+  var visible = 0;
+  rows.forEach(function(row) {
+    var text = row.textContent.toLowerCase();
+    var show = !query || text.includes(query);
+    row.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+  document.getElementById('usersTableCount').textContent = visible + ' записей';
+}
+
 function renderDashboard() {
   DB = loadDB(); ADB = loadAdminDB();
   var reports = DB.reports || [];
@@ -1780,7 +1798,7 @@ async function renderReports() {
           '<svg viewBox="0 0 24 24"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>' +
           'Удалить пост' +
         '</button>' +
-        '<button class="action-btn warn" onclick="openBanModalForReport(\'' + esc(targetId) + '\')">' +
+        '<button class="action-btn warn" onclick="openBanModalForReport(\'' + esc(t) + '\',\'' + esc(targetId) + '\')">' +
           '<svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' +
           'Блокировать' +
         '</button>' +
@@ -1851,15 +1869,29 @@ function execConfirm() {
 var _banDays = 7;
 var _banTarget = null; // username or null (for report-based ban)
 
-function openBanModalForReport(targetId) {
+async function openBanModalForReport(type, targetId) {
   _banTarget = targetId || '';
+  _banTargetId = null;
   _banDays = 7;
-  document.getElementById('banModalSub').textContent = 'Блокировка пользователя связанного с: ' + (targetId || 'ID неизвестен');
+  document.getElementById('banModalSub').textContent = 'Загружаю автора...';
   document.getElementById('banReasonInput').value = '';
-  // reset dur buttons
   document.querySelectorAll('#banDurGrid .dur-btn').forEach(function(b){ b.classList.remove('active'); });
   document.getElementById('customDaysRow').classList.remove('visible');
   document.getElementById('banModal').classList.add('open');
+
+  // Resolve content author
+  if (type && targetId) {
+    var r = await apiFetch('/content/' + encodeURIComponent(type) + '/' + encodeURIComponent(targetId) + '/author');
+    if (r.ok && r.data && r.data.id) {
+      _banTargetId = r.data.id;
+      _banTarget = r.data.username;
+      document.getElementById('banModalSub').textContent = 'Блокировка: ' + r.data.username + ' (id:' + r.data.id + ')';
+    } else {
+      document.getElementById('banModalSub').textContent = '⚠️ Автор не найден — укажите вручную';
+    }
+  } else {
+    document.getElementById('banModalSub').textContent = 'Блокировка пользователя';
+  }
 }
 
 function closeBanModal() {
@@ -2000,6 +2032,9 @@ async function renderTools() {
   document.getElementById('usersTableBody').innerHTML = rows.length ?
     rows.join('') :
     '<tr><td colspan="5" style="color:var(--mu);padding:2rem;text-align:center;font-family:\'Barlow Condensed\',sans-serif;letter-spacing:.15em;text-transform:uppercase">Нет пользователей в базе</td></tr>';
+  // Re-apply search filter if active
+  var q = document.getElementById('userSearchInput');
+  if (q && q.value) filterUsersTable(q.value);
 }
 
 async function unlinkTelegram(userId, username) {
