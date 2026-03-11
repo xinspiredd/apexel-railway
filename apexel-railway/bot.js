@@ -99,30 +99,66 @@ function sendMsg(chat_id, text, extra = {}) {
   return tgPost('sendMessage', { chat_id, text, parse_mode: 'HTML', ...extra });
 }
 
+function _apiBase() {
+  const u = process.env.APEXEL_URL;
+  return u ? u.replace(/\/+$/, '') : null;
+}
+
 function apiGet(path) {
   return new Promise(resolve => {
-    const r = http.request({ hostname:'127.0.0.1', port: MAIN_PORT, path, method:'GET',
-      headers:{'x-internal-secret': API_SECRET} }, res => {
-      let b=''; res.on('data',c=>b+=c);
-      res.on('end',()=>{ try{resolve(JSON.parse(b))}catch{resolve(null)} });
-    });
-    r.on('error',()=>resolve(null)); r.end();
+    const base = _apiBase();
+    if (base) {
+      try {
+        const u = new URL(base + path);
+        const mod = u.protocol === 'https:' ? require('https') : require('http');
+        const r = mod.request({ hostname: u.hostname, port: u.port || (u.protocol === 'https:' ? 443 : 80),
+          path: u.pathname + (u.search || ''), method: 'GET',
+          headers: { 'x-internal-secret': API_SECRET } }, res => {
+          let buf = ''; res.on('data', c => buf += c);
+          res.on('end', () => { try { resolve(JSON.parse(buf)); } catch { resolve(null); } });
+        });
+        r.on('error', () => resolve(null)); r.end();
+      } catch (e) { resolve(null); }
+    } else {
+      const r = http.request({ hostname: '127.0.0.1', port: MAIN_PORT, path, method: 'GET',
+        headers: { 'x-internal-secret': API_SECRET } }, res => {
+        let buf = ''; res.on('data', c => buf += c);
+        res.on('end', () => { try { resolve(JSON.parse(buf)); } catch { resolve(null); } });
+      });
+      r.on('error', () => resolve(null)); r.end();
+    }
   });
 }
 
 function apiPost(path, body) {
   return new Promise(resolve => {
     const data = JSON.stringify(body);
-    const r = http.request({ hostname:'127.0.0.1', port: MAIN_PORT, path, method:'POST',
-      headers:{'Content-Type':'application/json','Content-Length':Buffer.byteLength(data),'x-internal-secret': API_SECRET} }, res => {
-      let b=''; res.on('data',c=>b+=c);
-      res.on('end',()=>{ try{resolve(JSON.parse(b))}catch{resolve(null)} });
-    });
-    r.on('error',()=>resolve(null)); r.write(data); r.end();
+    const base = _apiBase();
+    if (base) {
+      try {
+        const u = new URL(base + path);
+        const mod = u.protocol === 'https:' ? require('https') : require('http');
+        const r = mod.request({ hostname: u.hostname, port: u.port || (u.protocol === 'https:' ? 443 : 80),
+          path: u.pathname + (u.search || ''), method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), 'x-internal-secret': API_SECRET } }, res => {
+          let buf = ''; res.on('data', c => buf += c);
+          res.on('end', () => { try { resolve(JSON.parse(buf)); } catch { resolve(null); } });
+        });
+        r.on('error', () => resolve(null)); r.write(data); r.end();
+      } catch (e) { resolve(null); }
+    } else {
+      const r = http.request({ hostname: '127.0.0.1', port: MAIN_PORT, path, method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), 'x-internal-secret': API_SECRET } }, res => {
+        let buf = ''; res.on('data', c => buf += c);
+        res.on('end', () => { try { resolve(JSON.parse(buf)); } catch { resolve(null); } });
+      });
+      r.on('error', () => resolve(null)); r.write(data); r.end();
+    }
   });
+};
+if (fs.existsSync(CFG_FILE)) {
+  try { cfg = JSON.parse(fs.readFileSync(CFG_FILE, 'utf8')); } catch {}
 }
-
-// ─── HANDLE TELEGRAM UPDATE ───────────────────────────────────────
 async function handleUpdate(upd) {
   const msg = upd.message;
   if (!msg || !msg.text) return;
@@ -144,24 +180,15 @@ async function handleUpdate(upd) {
     return;
   }
 
-  if (text === '/unlink' || text === '🔗 Отвязать аккаунт APEXEL') {
-    // Ask the main server to unlink this telegram_id
-    const payload = JSON.stringify({ telegram_id: tg_id });
-    const req2 = require('http').request({
-      hostname: '127.0.0.1', port: MAIN_PORT, path: '/api/internal/unlink-telegram',
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload), 'x-internal-secret': API_SECRET }
-    }, res2 => {
-      let b=''; res2.on('data',c=>b+=c);
-      res2.on('end', () => {
-        try {
-          const d = JSON.parse(b);
-          if (d.ok) sendMsg(chat_id, '\u2705 <b>Telegram успешно отвязан от APEXEL.</b>\n\nВы можете заново привязать аккаунт через настройки на сайте.');
-          else sendMsg(chat_id, '❌ Этот Telegram не привязан ни к одному аккаунту APEXEL.');
-        } catch { sendMsg(chat_id, '❌ Ошибка при отвязке. Попробуйте позже.'); }
-      });
-    });
-    req2.on('error', () => sendMsg(chat_id, '❌ Сервер APEXEL недоступен.'));
-    req2.write(payload); req2.end();
+  if (text === '/unlink' || text === '🔗 Отвязать аккунт APEXEL') {
+    const r2 = await apiPost('/api/internal/unlink-telegram', { telegram_id: tg_id });
+    if (r2 && r2.ok) {
+      await sendMsg(chat_id, '✅ <b>Telegram успешно отвязан от APEXEL.</b>\n\nВы можете заново привязать аккаунт через настройки на сайте.');
+    } else if (r2 && r2.error === 'not found') {
+      await sendMsg(chat_id, '❌ Этот Telegram не привязан ни к одному аккаунту APEXEL.');
+    } else {
+      await sendMsg(chat_id, '❌ Ошибка при отвязке. Попробуйте позже.');
+    }
     return;
   }
 
@@ -264,17 +291,10 @@ const botServer = http.createServer((req, res) => {
     if (secret !== API_SECRET) return setJSON(403, { error: 'forbidden' });
     let body = '';
     req.on('data', c => body += c);
-    req.on('end', () => {
+    req.on('end', async () => {
       let data; try { data = JSON.parse(body); } catch { return setJSON(400, {}); }
-      // Call main server to unlink
-      const http2 = require('http');
-      const payload = JSON.stringify({ telegram_id: data.telegram_id });
-      const r2 = http2.request({
-        hostname: '127.0.0.1', port: MAIN_PORT, path: '/api/internal/unlink-telegram',
-        method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload), 'x-internal-secret': API_SECRET }
-      }, res2 => { let b=''; res2.on('data',c=>b+=c); res2.on('end',()=>{ try{setJSON(200,JSON.parse(b))}catch{setJSON(200,{ok:true})} }); });
-      r2.on('error', () => setJSON(500, { error: 'server error' }));
-      r2.write(payload); r2.end();
+      const r2 = await apiPost('/api/internal/unlink-telegram', { telegram_id: data.telegram_id });
+      setJSON(200, r2 || { ok: true });
     });
     return;
   }
