@@ -20,7 +20,7 @@ if (process.env.JWT_SECRET) {
   JWT_SECRET = fs.readFileSync(SECRET_FILE, 'utf8').trim();
 } else {
   JWT_SECRET = crypto.randomBytes(32).toString('hex');
-  fs.writeFileSync(SECRET_FILE, JWT_SECRET);
+  try { fs.writeFileSync(SECRET_FILE, JWT_SECRET); } catch(e) { /* read-only FS — set JWT_SECRET env var to persist tokens */ }
 }
 const STATIC_DIR = path.resolve(__dirname, 'public');  // ← ИСПРАВЛЕНО: теперь указывает на папку public
 
@@ -33,7 +33,10 @@ if (fs.existsSync(BOT_CFG_FILE)) {
 const BOT_INTERNAL_PORT = process.env.BOT_PORT   || BOT_CFG.API_PORT   || 3001;
 const BOT_SECRET        = process.env.API_SECRET  || BOT_CFG.API_SECRET || 'apexel_bot_secret';
 const BOT_ENABLED       = !!process.env.BOT_TOKEN  || !!BOT_CFG.BOT_TOKEN;
-const DB_FILE    = path.resolve(__dirname, 'apexel.db');
+const DB_FILE = process.env.DB_PATH ||
+               (process.env.RAILWAY_VOLUME_MOUNT_PATH
+                 ? require('path').join(process.env.RAILWAY_VOLUME_MOUNT_PATH, 'apexel.db')
+                 : require('path').resolve(__dirname, 'apexel.db'));
 
 // ─── DATABASE ─────────────────────────────────────────────────
 const db = new Database(DB_FILE);
@@ -896,6 +899,20 @@ route('DELETE', '/api/content/:type/:id', async (req, res) => {
   json(res, 200, { ok: true });
 });
 
+// Get author info from content (for ban-from-report)
+route('GET', '/api/content/:type/:id/author', async (req, res) => {
+  const user = getUser(req);
+  if (!requireAdmin(user, res)) return;
+  const tables = { build:'builds', vinyl:'vinyls', comment:'comments', guide:'guides' };
+  const table = tables[req.params.type];
+  if (!table) return json(res, 400, { error: 'Unknown type' });
+  const row = db.prepare(`SELECT user_id FROM ${table} WHERE id=?`).get(req.params.id);
+  if (!row) return json(res, 404, { error: 'Not found' });
+  const u = db.prepare('SELECT id,username,role FROM users WHERE id=?').get(row.user_id);
+  if (!u) return json(res, 404, { error: 'User not found' });
+  json(res, 200, u);
+});
+
 // ─── NEWS ─────────────────────────────────────────────────────
 route('GET', '/api/news', async (req, res) => {
   const news = db.prepare('SELECT id,title,body,tag,author,pinned,has_img,created_at FROM news ORDER BY pinned DESC,created_at DESC').all();
@@ -905,7 +922,14 @@ route('GET', '/api/news', async (req, res) => {
 route('GET', '/api/news/:id/image', async (req, res) => {
   const row = db.prepare('SELECT data FROM news_images WHERE news_id=?').get(req.params.id);
   if (!row) return json(res, 404, { error: 'No image' });
-  json(res, 200, { image: row.data });
+  const data = row.data || '';
+  const m = data.match(/^data:([^;]+);base64,(.+)$/);
+  if (m) {
+    const buf = Buffer.from(m[2], 'base64');
+    res.writeHead(200, { 'Content-Type': m[1], 'Content-Length': buf.length, 'Cache-Control': 'public,max-age=86400' });
+    return res.end(buf);
+  }
+  json(res, 200, { image: data });
 });
 
 route('POST', '/api/news', async (req, res) => {
