@@ -4,9 +4,7 @@
   "description": "APEXEL — NFS World Community Platform",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "start:bot": "node bot.js",
-    "start:all": "node server.js & node bot.js & wait"
+    "start": "node server.js"
   },
   "engines": {
     "node": ">=18"
