@@ -1812,6 +1812,22 @@ textarea.fi{resize:vertical;min-height:100px}
   letter-spacing: .04em;
   flex: 1;
 }
+.guide-comment-delete {
+  background: none;
+  border: none;
+  color: rgba(196,124,124,.4);
+  cursor: pointer;
+  font-size: .95rem;
+  line-height: 1;
+  padding: .1rem .35rem;
+  border-radius: 3px;
+  transition: color .15s, background .15s;
+  margin-left: auto;
+}
+.guide-comment-delete:hover {
+  color: var(--red);
+  background: rgba(196,124,124,.1);
+}
 .guide-comment-report {
   background: none;
   border: none;
@@ -4262,8 +4278,8 @@ async function _viewTelegraphLegacy(guideId) {
         '<div class="guide-comment-item" id="' + cmtKey + '">' +
         '<div class="guide-comment-header">' +
         '<span class="guide-comment-author">' + esc(c.author||'Аноним') + '</span>' +
+        (_authUser && (c.author === _authUser.username || _authUser.role === 'admin') && c.id ? '<button class="guide-comment-delete" onclick="deleteGuideComment(\'' + c.id + '\',\'' + cmtKey + '\')" title="Delete">×</button>' : '') +
         '<button class="guide-comment-report" onclick="openReportModal(\'guide_comment\',\'' + cmtKey + '\')">⚠️</button>' +
-        '</div>' +
         '<div class="guide-comment-text">' + esc(c.text) + '</div>' +
         '</div>';
     });
@@ -4273,6 +4289,19 @@ async function _viewTelegraphLegacy(guideId) {
   if (list) list.innerHTML = commentsListHtml;
   var titleEl = document.querySelector('.guide-comments-title');
   if (titleEl) titleEl.textContent = 'Комментарии (' + comments.length + ')';
+}
+
+async function deleteGuideComment(commentId, elemId) {
+  if (!confirm('Delete this comment?')) return;
+  var r = await apiFetch('/comments/' + commentId, { method: 'DELETE' });
+  if (!r.ok) { toast('Error: ' + ((r.data && r.data.error) || 'server error'), true); return; }
+  var el = document.getElementById(elemId);
+  if (el) {
+    el.style.opacity = '0';
+    el.style.transition = 'opacity .2s';
+    setTimeout(function(){ el.remove(); }, 200);
+  }
+  toast('Comment deleted');
 }
 
 function closeTelegraphViewModal() {
@@ -4294,6 +4323,7 @@ async function addGuideComment(guideId) {
 
   var r = await apiFetch('/comments', {method:'POST', body:JSON.stringify({target_type:'guide', target_id:guideId, text:txt})});
   if (!r.ok) { toast('Ошибка: '+((r.data&&r.data.error)||'сервер недоступен'), true); return; }
+  var newCmtServerId = (r.data && r.data.id) ? r.data.id : '';
 
   if (!DB.guideComments) DB.guideComments = {};
   if (!DB.guideComments[guideId]) DB.guideComments[guideId] = [];
@@ -4311,13 +4341,14 @@ async function addGuideComment(guideId) {
   var d = document.createElement('div');
   d.className = 'guide-comment-item';
   d.id = cmtKey;
+  var serverId = newCmtServerId || '';
   d.innerHTML =
     '<div class="guide-comment-header">' +
     '<span class="guide-comment-author">' + esc(newComment.author) + '</span>' +
+    (serverId ? '<button class="guide-comment-delete" onclick="deleteGuideComment(\'' + serverId + '\',\'' + cmtKey + '\')" title="Delete">×</button>' : '') +
     '<button class="guide-comment-report" onclick="openReportModal(\'guide_comment\',\'' + cmtKey + '\')">⚠️</button>' +
     '</div>' +
     '<div class="guide-comment-text">' + esc(newComment.text) + '</div>';
-  list.appendChild(d);
 
   var titleEl = list.closest('.guide-comments-section').querySelector('.guide-comments-title');
   if (titleEl) {
