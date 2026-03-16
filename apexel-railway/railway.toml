@@ -1,11 +1,7 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm install"
 
 [deploy]
-startCommand = "npm run start:all"
+startCommand = "node server.js"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
-
-[[services]]
-name = "apexel-server"
