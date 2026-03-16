@@ -534,18 +534,15 @@ nav{position:fixed;top:0;left:0;right:0;z-index:9000;height:70px;display:flex;al
 
 /* BUILDS LIST */
 .bl{display:flex;flex-direction:column;gap:2px;background:rgba(255,255,255,.02);margin-bottom:2rem}
-.bi{background:var(--s2);transition:background .18s,border-color .18s;border-left:2px solid transparent;border-bottom:1px solid rgba(255,255,255,.04);cursor:none}
+.bi{background:var(--s2);transition:background .18s,border-color .18s;border-left:2px solid transparent;border-bottom:1px solid rgba(255,255,255,.04)}
 .bi:hover{background:#1c1c25;border-left-color:rgba(155,191,95,.35)}
-.bi.expanded{border-left-color:var(--ac);background:#1a1a23}
-.bih{display:flex;align-items:center;gap:.8rem;padding:1rem 1.2rem;user-select:none;cursor:none}
+.bih{display:flex;align-items:center;gap:.8rem;padding:1rem 1.2rem;user-select:none}
 .bih-left{flex:1;min-width:0;display:flex;align-items:center;gap:.9rem}
 .btn{font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bau{font-size:0.78rem;color:var(--mu);letter-spacing:.04em;white-space:nowrap;flex-shrink:0}
 .bih-stats{display:flex;gap:.5rem;flex-shrink:0}
 .bi-chevron{width:16px;height:16px;stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0;transition:transform .22s ease}
-.bi.expanded .bi-chevron{transform:rotate(180deg);stroke:var(--ac)}
-.bi-body{display:none;padding:0 1.2rem 1.1rem;animation:fadeIn .2s ease}
-.bi.expanded .bi-body{display:block}
+.bi:hover .bi-chevron{stroke:var(--ac)}
 .chips{display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:.9rem}
 .chip2{display:inline-flex;align-items:center;gap:0.5rem;background:var(--s1);border:1px solid var(--br);padding:0.3rem 0.8rem;font-family:'Barlow Condensed',sans-serif;font-size:0.85rem;letter-spacing:.06em;cursor:default;position:relative;transition:var(--transition-base)}
 .chip2:hover{border-color:rgba(155,191,95,.28);transform:translateY(-1px)}
@@ -3132,6 +3129,61 @@ nav {
 .page:not(.active) {
   content-visibility: hidden;
 }
+
+/* ── BUILD FULLSCREEN MODAL ──────────────────────────────────── */
+.build-modal-overlay {
+  display:none;position:fixed;inset:0;z-index:10000;
+  background:rgba(0,0,0,.85);backdrop-filter:blur(6px);
+  animation:fadeIn .2s ease;
+  overflow-y:auto;
+}
+.build-modal-overlay.open { display:flex;align-items:flex-start;justify-content:center;padding:60px 16px 40px; }
+.build-modal {
+  width:100%;max-width:760px;
+  background:var(--s1);
+  border:1px solid rgba(155,191,95,.15);
+  box-shadow:0 24px 80px rgba(0,0,0,.7);
+  animation:slideUp .25s ease;
+  position:relative;
+}
+@keyframes slideUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+.bm-close {
+  position:absolute;top:1rem;right:1rem;
+  background:none;border:none;color:var(--mu);cursor:none;
+  width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+  transition:color .15s;z-index:2;
+}
+.bm-close:hover{color:var(--tx)}
+.bm-close svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
+.bm-banners{}
+.bm-header {
+  padding:1.8rem 2rem 1.2rem;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.bm-title {
+  font-family:'Barlow Condensed',sans-serif;font-size:2rem;letter-spacing:.06em;
+  line-height:1.1;margin-bottom:.4rem;
+}
+.bm-author {
+  font-size:.85rem;color:var(--mu);letter-spacing:.04em;
+  display:flex;align-items:center;gap:.4rem;
+}
+.bm-stats {
+  display:flex;gap:.6rem;margin-top:1rem;flex-wrap:wrap;
+}
+.bm-body { padding:1.5rem 2rem; }
+.bm-section { margin-bottom:1.4rem; }
+.bm-section-label {
+  font-family:'Barlow Condensed',sans-serif;font-size:.65rem;
+  letter-spacing:.22em;text-transform:uppercase;color:var(--mu);
+  margin-bottom:.7rem;border-bottom:1px solid rgba(255,255,255,.05);padding-bottom:.4rem;
+}
+.bm-desc { font-size:.95rem;color:rgba(255,255,255,.65);line-height:1.7; }
+.bm-footer {
+  padding:1rem 2rem 1.5rem;
+  border-top:1px solid rgba(255,255,255,.06);
+  display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;
+}
 </style>
 </head>
 <body><div id="banBanner">
@@ -4429,11 +4481,16 @@ var DB=loadDB();
 // Load dynamic data from API on startup
 async function syncFromAPI() {
   try {
-    var [buildsRes, vinylsRes, guidesRes] = await Promise.all([
+    var [buildsRes, vinylsRes, guidesRes, carsRes] = await Promise.all([
       apiFetch('/builds'),
       apiFetch('/vinyls'),
-      apiFetch('/guides')
+      apiFetch('/guides'),
+      apiFetch('/cars')
     ]);
+    // Merge server cars with local (server has full list if synced)
+    if (carsRes.ok && carsRes.data && carsRes.data.length > 0) {
+      DB.cars = carsRes.data;
+    }
     if (buildsRes.ok) {
       DB.builds = {};
       buildsRes.data.forEach(function(b) {
@@ -5082,17 +5139,155 @@ function rBuilds(cid){
   });
 }
 
+// ── Build fullscreen modal state ──────────────────────────────
+var _bmCid = null, _bmIdx = null;
+
 function toggleBuild(el, key) {
-  var wasExpanded = el.classList.contains('expanded');
-  // Close all others in same list
-  var list = el.parentNode;
-  if (list) {
-    list.querySelectorAll('.bi.expanded').forEach(function(other) {
-      if (other !== el) other.classList.remove('expanded');
-    });
-  }
-  el.classList.toggle('expanded', !wasExpanded);
+  // key = "cid_idx"
+  var parts = key.split('_');
+  var cid = parts[0];
+  var idx = parseInt(parts[1]);
+  openBuildModal(cid, idx, key);
 }
+
+function openBuildModal(cid, idx, key) {
+  _bmCid = cid; _bmIdx = idx;
+  var build = (DB.builds[cid] || [])[idx];
+  if (!build) return;
+
+  var slots = build.slots || {};
+  var s=0,a=0,hh=0;
+  Object.values(slots).forEach(function(p){if(p){s+=p.spd;a+=p.acc;hh+=p.hdl;}});
+
+  var chips = '';
+  SLOTS.forEach(function(sd){
+    var p = slots[sd.id]; if(!p) return;
+    chips += '<span class="chip2"><span class="c2l">'+sd.label+'</span>&nbsp;'+esc(p.name)+
+      '<div class="stt"><div class="stn">'+esc(p.name)+'</div><div class="sts">'+esc(p.ser)+'</div>'+
+      '<div class="str"><span class="stl spd">Speed</span><div class="stb"><div class="stf spd" style="width:'+Math.min(p.spd,100)+'%"></div></div><span class="stv spd">+'+p.spd+'</span></div>'+
+      '<div class="str"><span class="stl acc">Accel</span><div class="stb"><div class="stf acc" style="width:'+Math.min(p.acc,100)+'%"></div></div><span class="stv acc">+'+p.acc+'</span></div>'+
+      '<div class="str"><span class="stl hdl">Handling</span><div class="stb"><div class="stf hdl" style="width:'+Math.min(p.hdl,100)+'%"></div></div><span class="stv hdl">+'+p.hdl+'</span></div>'+
+      '</div></span>';
+  });
+
+  var isProBuild = build.user_role === 'pro';
+  var isRec = !!(build.is_recommended);
+  var isOwner = _authUser && (_authUser.username === build.author);
+  var isPro   = _authUser && (_authUser.role === 'pro');
+  var realId  = build._id || key;
+  var proBadge = isProBuild ? '<span class="pro-badge"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg>PRO</span>' : '';
+
+  var votes = DB.votes[key] || {likes:0,dislikes:0,uv:null};
+  var likes = (build.likes != null) ? build.likes : votes.likes;
+  var dislikes = (build.dislikes != null) ? build.dislikes : votes.dislikes;
+  var uv = votes.uv;
+
+  // Banners
+  var bannersHtml = '';
+  if(isProBuild) bannersHtml += '<div class="bi-pro-banner"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg>Pro-driver build</div>';
+  if(isRec && build.recommended_by) bannersHtml += '<div class="bi-rec-ribbon"><svg viewBox="0 0 24 24"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>Recommended by <span class="rec-who">'+esc(build.recommended_by)+'</span></div>';
+  document.getElementById('bmBanners').innerHTML = bannersHtml;
+
+  // Header
+  document.getElementById('bmTitle').textContent = build.name;
+  document.getElementById('bmAuthor').innerHTML = 'by <b style="color:var(--tx);margin-left:.25rem">'+esc(build.author||'Anonymous')+'</b>'+proBadge;
+  document.getElementById('bmStats').innerHTML = ist('spd',s)+ist('acc',a)+ist('hdl',hh);
+
+  // Parts
+  var partsSection = document.getElementById('bmPartsSection');
+  document.getElementById('bmChips').innerHTML = chips;
+  partsSection.style.display = chips ? '' : 'none';
+
+  // Description
+  var descSection = document.getElementById('bmDescSection');
+  if(build.desc){ document.getElementById('bmDesc').textContent = build.desc; descSection.style.display=''; }
+  else { descSection.style.display='none'; }
+
+  // Comments
+  var cmts = DB.comments[key] || [];
+  var cmtsHtml = '';
+  cmts.forEach(function(c, ci){
+    var cmtKey = key+'_cmt_'+ci;
+    cmtsHtml += '<div class="cmt" id="bmc_'+cmtKey+'">'+
+      '<div class="cma">'+esc(c.author)+'<button class="cmt-report" onclick="openReportModal('comment',''+cmtKey+'')">⚠️</button></div>'+
+      '<div class="cmtx">'+esc(c.text)+'</div></div>';
+  });
+  if(!cmts.length) cmtsHtml = '<div style="color:var(--mu);font-size:.85rem;padding:.5rem 0">No comments yet</div>';
+  document.getElementById('bmComments').innerHTML = cmtsHtml;
+
+  // Comment form
+  var form = document.getElementById('bmCommentForm');
+  form.style.display = _authUser ? '' : 'none';
+  document.getElementById('bmCommentInput').value = '';
+  document.getElementById('bmCommentBtn').onclick = function(){
+    var txt = document.getElementById('bmCommentInput').value.trim();
+    if(!txt) return;
+    addCmt(cid, idx, key);
+    // Copy value from cmi_ field (addCmt reads from it) — sync both inputs
+    var orig = document.getElementById('cmi_'+key);
+    if(orig){ document.getElementById('bmCommentInput').value = orig.value || ''; }
+    setTimeout(function(){
+      // Refresh comments in modal
+      var cmts2 = DB.comments[key]||[];
+      var h='';
+      cmts2.forEach(function(c,ci){
+        var ck=key+'_cmt_'+ci;
+        h+='<div class="cmt"><div class="cma">'+esc(c.author)+'</div><div class="cmtx">'+esc(c.text)+'</div></div>';
+      });
+      document.getElementById('bmComments').innerHTML = h||'<div style="color:var(--mu);font-size:.85rem;padding:.5rem 0">No comments yet</div>';
+      document.getElementById('bmCommentInput').value='';
+    }, 600);
+  };
+  // Sync cmCommentInput → cmi_ so addCmt can read it
+  document.getElementById('bmCommentInput').oninput = function(){
+    var orig = document.getElementById('cmi_'+key);
+    if(orig) orig.value = this.value;
+  };
+
+  // Footer actions
+  var footerHtml = '';
+  footerHtml += '<button class="vb lk'+(uv==='like'?' on':'')+'" id="bm_lk_'+key+'" onclick="vote(''+cid+'','+idx+','like');setTimeout(function(){refreshBmVotes(''+key+'',''+cid+'','+idx+')},300)">'+IC.lk+'<span id="bmlk_'+key+'">'+likes+'</span></button>';
+  footerHtml += '<button class="vb ds'+(uv==='dislike'?' on':'')+'" id="bm_ds_'+key+'" onclick="vote(''+cid+'','+idx+','dislike');setTimeout(function(){refreshBmVotes(''+key+'',''+cid+'','+idx+')},300)">'+IC.ds+'<span id="bmdk_'+key+'">'+dislikes+'</span></button>';
+  if(isPro && isOwner){
+    footerHtml += '<button class="btn-recommend'+(isRec?' active':'')+'" onclick="toggleRecommend(''+realId+'',''+key+'')"><svg viewBox="0 0 24 24"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>'+(isRec?'Remove rec.':'Recommend')+'</button>';
+  }
+  footerHtml += '<button class="vb report" onclick="openReportModal('build',''+realId+'')">⚠️ Report</button>';
+  document.getElementById('bmFooter').innerHTML = footerHtml;
+
+  // Open
+  document.getElementById('buildModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function refreshBmVotes(key, cid, idx) {
+  var build = (DB.builds[cid]||[])[idx];
+  if(!build) return;
+  var votes = DB.votes[key]||{uv:null};
+  var likes = (build.likes!=null)?build.likes:votes.likes||0;
+  var dislikes = (build.dislikes!=null)?build.dislikes:votes.dislikes||0;
+  var uv = votes.uv;
+  var lkEl = document.getElementById('bmlk_'+key);
+  var dkEl = document.getElementById('bmdk_'+key);
+  if(lkEl) lkEl.textContent = likes;
+  if(dkEl) dkEl.textContent = dislikes;
+  var lkBtn = document.getElementById('bm_lk_'+key);
+  var dsBtn = document.getElementById('bm_ds_'+key);
+  if(lkBtn) lkBtn.classList.toggle('on', uv==='like');
+  if(dsBtn) dsBtn.classList.toggle('on', uv==='dislike');
+}
+
+function closeBuildModal(e) {
+  if(e && e.target !== document.getElementById('buildModal')) return;
+  closeBuildModalDirect();
+}
+function closeBuildModalDirect() {
+  document.getElementById('buildModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+// ESC key closes modal
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape') closeBuildModalDirect();
+});
 
 function _rBuildsRender(cid){
   var bl=document.getElementById('blist');if(!bl)return;
@@ -5173,32 +5368,9 @@ function _rBuildsRender(cid){
     h+='<svg class="bi-chevron" viewBox="0 0 24 24"><polyline points="6,9 12,15 18,9"/></svg>';
     h+='</div>';
 
-    // ── expandable detail body ──
-    h+='<div class="bi-body" onclick="event.stopPropagation()">';
-    if(chips) h+='<div class="chips">'+chips+'</div>';
-    if(build.desc) h+='<div class="bdesc">'+esc(build.desc)+'</div>';
-    h+='<div class="bact">';
-    h+='<button class="vb lk'+(uv==='like'?' on':'')+'" onclick="event.stopPropagation();vote(''+cid+'','+i+','like')">'+IC.lk+'<span id="lk_'+key+'">'+likes+'</span></button>';
-    h+='<button class="vb ds'+(uv==='dislike'?' on':'')+'" onclick="event.stopPropagation();vote(''+cid+'','+i+','dislike')">'+IC.ds+'<span id="dk_'+key+'">'+dislikes+'</span></button>';
-    if(isPro && isOwner){
-      h+='<button class="btn-recommend'+(isRec?' active':'')+'" id="recbtn_'+key+'" onclick="event.stopPropagation();toggleRecommend(''+realId+'',''+key+'')"><svg viewBox="0 0 24 24"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>'+(isRec?'Remove rec.':'Recommend')+'</button>';
-    }
-    h+='<button class="vb report" onclick="event.stopPropagation();openReportModal('build',''+realId+'')">⚠️</button>';
-    h+='<button class="tcb" onclick="event.stopPropagation();tCmt(''+key+'',''+cid+'','+i+')">Comments ('+cmts.length+')</button>';
+    // hidden data for modal (cmi_ input for addCmt compat)
+    h+='<textarea class="cmi" id="cmi_'+key+'" rows="2" style="display:none"></textarea>';
     h+='</div>';
-    h+='<div class="cmts" id="cm_'+key+'">';
-    h+='<div id="cml_'+key+'">';
-    cmts.forEach(function(c, cmtIdx){
-      var cmtKey = key+'_cmt_'+cmtIdx;
-      h+='<div class="cmt" id="'+cmtKey+'">'+
-         '<div class="cma">'+esc(c.author)+
-         '<button class="cmt-report" onclick="event.stopPropagation();openReportModal('comment',''+cmtKey+'')">⚠️</button>'+
-         '</div><div class="cmtx">'+esc(c.text)+'</div></div>';
-    });
-    h+='</div>';
-    h+='<div class="cmf"><textarea class="cmi" id="cmi_'+key+'" rows="2" placeholder="Add a comment..."></textarea><button class="cms" onclick="event.stopPropagation();addCmt(''+cid+'','+i+',''+key+'')" title="Post"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg></button></div>';
-    h+='</div>';
-    h+='</div></div>';
   });
   bl.innerHTML=h;
 }
@@ -6545,3 +6717,39 @@ function toggleLang() {
 // Apply on load
 document.addEventListener('DOMContentLoaded', function(){ setTimeout(applyI18n, 100); });
 </script>
+<!-- BUILD FULLSCREEN MODAL -->
+<div class="build-modal-overlay" id="buildModal" onclick="closeBuildModal(event)">
+  <div class="build-modal" id="buildModalInner">
+    <button class="bm-close" onclick="closeBuildModalDirect()">
+      <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="bm-banners" id="bmBanners"></div>
+    <div class="bm-header">
+      <div class="bm-title" id="bmTitle"></div>
+      <div class="bm-author" id="bmAuthor"></div>
+      <div class="bm-stats" id="bmStats"></div>
+    </div>
+    <div class="bm-body">
+      <div class="bm-section" id="bmPartsSection">
+        <div class="bm-section-label">Parts</div>
+        <div class="chips" id="bmChips" style="margin-bottom:0"></div>
+      </div>
+      <div class="bm-section" id="bmDescSection" style="display:none">
+        <div class="bm-section-label">Description</div>
+        <div class="bm-desc" id="bmDesc"></div>
+      </div>
+      <div class="bm-section">
+        <div class="bm-section-label">Comments</div>
+        <div id="bmComments"></div>
+        <div class="cmf" style="margin-top:1rem" id="bmCommentForm">
+          <textarea class="cmi" id="bmCommentInput" rows="2" placeholder="Add a comment..."></textarea>
+          <button class="cms" id="bmCommentBtn" title="Post"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg></button>
+        </div>
+      </div>
+    </div>
+    <div class="bm-footer" id="bmFooter"></div>
+  </div>
+</div>
+
+</body>
+</html>
