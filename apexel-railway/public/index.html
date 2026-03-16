@@ -3835,7 +3835,7 @@ function switchPage(page, element) {
       renderLeaderboard();
     }
     if (page === 'news') {
-      _newsCacheKey = ''; // force re-render on page open
+      _newsCacheKey = '';
       apiFetch('/news').then(function(r){
         if (r.ok && Array.isArray(r.data)) {
           _newsCache = r.data;
@@ -3897,9 +3897,7 @@ function renderPopular() {
     h += '<div class="pop-name">' + esc(item.build.name) + '</div>';
     var popProBadge = item.build.user_role === 'pro' ? '<span class="pro-badge"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg>PRO</span>' : '';
     var _init = (item.build.author||'A')[0].toUpperCase();
-    h += '<div class="pop-author bau-pro" style="display:flex;align-items:center;gap:.4rem">' +
-         '<span style="width:18px;height:18px;border-radius:50%;background:rgba(155,191,95,.15);border:1px solid rgba(155,191,95,.3);display:inline-flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;color:var(--ac);flex-shrink:0;">' + _init + '</span>' +
-         'by ' + esc(item.build.author || 'Anonymous') + popProBadge + '</div>';
+    h += '<div class="pop-author bau-pro" style="display:flex;align-items:center;gap:.4rem"><span style="width:18px;height:18px;border-radius:50%;background:rgba(155,191,95,.15);border:1px solid rgba(155,191,95,.3);display:inline-flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;color:var(--ac);flex-shrink:0">' + _init + '</span>by ' + esc(item.build.author || 'Anonymous') + popProBadge + '</div>';
     h += '<div class="pop-stats">' + ist('spd', item.spd) + ist('acc', item.acc) + ist('hdl', item.hdl) + '</div>';
     h += '</div>';
     h += '<div class="pop-right"><div class="pop-likes">' + item.likes + '</div><div class="pop-likes-label">Лайков</div></div>';
@@ -6463,8 +6461,55 @@ document.addEventListener('click', function(e){
   if (s && !s.contains(e.target)) s.style.display='none';
 });
 
-// English only — i18n removed
+// ─── i18n ────────────────────────────────────────────────────────
+var _lang = localStorage.getItem('apexel_lang') || 'ru';
 
+var STRINGS = {
+  ru: {
+    nav_popular:'Popular Builds', nav_leaderboard:'Лидерборд', nav_news:'Новости',
+    nav_community:'Сообщество', nav_about:'О проекте',
+    lb_title:'ЛИДЕР', lb_title2:'БОРД', lb_sub:'Топ билдов и авторов сообщества.',
+    lb_period:'Период', lb_all:'Всё время', lb_month:'Месяц', lb_week:'Неделя',
+    lb_builds:'Билды', lb_authors:'Авторы',
+    lb_empty:'Нет данных за этот период',
+    lb_likes:'лайков', lb_builds_count:'билдов',
+    tags_label:'ТЕГИ', tags_hint:'(до 5 тегов через запятую: дрифт, скорость, про...)',
+    lang_btn:'EN',
+  },
+  en: {
+    nav_popular:'Popular Builds', nav_leaderboard:'Leaderboard', nav_news:'News',
+    nav_community:'Community', nav_about:'About',
+    lb_title:'LEADER', lb_title2:'BOARD', lb_sub:'Top builds and authors of the community.',
+    lb_period:'Period', lb_all:'All Time', lb_month:'Month', lb_week:'Week',
+    lb_builds:'Builds', lb_authors:'Authors',
+    lb_empty:'No data for this period',
+    lb_likes:'likes', lb_builds_count:'builds',
+    tags_label:'TAGS', tags_hint:'(up to 5 tags, comma separated: drift, speed, pro...)',
+    lang_btn:'RU',
+  }
+};
+
+function i18n(key) {
+  return (STRINGS[_lang] && STRINGS[_lang][key]) || (STRINGS['en'][key]) || key;
+}
+
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(function(el){
+    var key = el.getAttribute('data-i18n');
+    var str = i18n(key);
+    if (str) el.textContent = str;
+  });
+  // lang button label
+  var btn = document.getElementById('langBtn');
+  if (btn) btn.textContent = i18n('lang_btn');
+}
+
+function toggleLang() {
+  _lang = _lang === 'ru' ? 'en' : 'ru';
+  localStorage.setItem('apexel_lang', _lang);
+  applyI18n();
+}
+
+// Apply on load
+document.addEventListener('DOMContentLoaded', function(){ setTimeout(applyI18n, 100); });
 </script>
-        var safeCarId = (b.car_id||'').replace(/'/g,'');
-        h += '<div class="pop-build-row" style="cursor:pointer" onclick="openCar(\'' + safeCarId + '\')">\' +>
