@@ -5133,10 +5133,10 @@ function toggleBuild(el, key) {
   var parts = key.split('_');
   var cid = parts[0];
   var idx = parseInt(parts[1]);
-  openBuildModal(cid, idx, key);
+  openBuildView(cid, idx, key);
 }
 
-function openBuildModal(cid, idx, key) {
+function openBuildView(cid, idx, key) {
   _bmCid = cid; _bmIdx = idx;
   var build = (DB.builds[cid] || [])[idx];
   if (!build) return;
@@ -5262,17 +5262,17 @@ function refreshBmVotes(key, cid, idx) {
   if(dsBtn) dsBtn.classList.toggle('on', uv==='dislike');
 }
 
-function closeBuildModal(e) {
+function closeBuildView(e) {
   if(e && e.target !== document.getElementById('buildModal')) return;
   closeBuildModalDirect();
 }
-function closeBuildModalDirect() {
+function closeBuildViewDirect() {
   document.getElementById('buildModal').classList.remove('open');
   document.body.style.overflow = '';
 }
 // ESC key closes modal
 document.addEventListener('keydown', function(e){
-  if(e.key === 'Escape') closeBuildModalDirect();
+  if(e.key === 'Escape') closeBuildViewDirect();
 });
 
 function _rBuildsRender(cid){
@@ -6704,9 +6704,9 @@ function toggleLang() {
 document.addEventListener('DOMContentLoaded', function(){ setTimeout(applyI18n, 100); });
 </script>
 <!-- BUILD FULLSCREEN MODAL -->
-<div class="build-modal-overlay" id="buildModal" onclick="closeBuildModal(event)">
+<div class="build-modal-overlay" id="buildModal" onclick="closeBuildView(event)">
   <div class="build-modal" id="buildModalInner">
-    <button class="bm-close" onclick="closeBuildModalDirect()">
+    <button class="bm-close" onclick="closeBuildViewDirect()">
       <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
     </button>
     <div class="bm-banners" id="bmBanners"></div>
