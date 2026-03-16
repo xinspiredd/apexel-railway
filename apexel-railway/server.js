@@ -1212,10 +1212,33 @@ const server = http.createServer(async (req, res) => {
   }
 
   // Static files
+  // Handle HEAD requests for video (browser preflight)
+  if (req.method === 'HEAD' && (url.endsWith('.mp4') || url.endsWith('.webm'))) {
+    const vp = fs.existsSync(path.join(__dirname, url.slice(1)))
+      ? path.join(__dirname, url.slice(1))
+      : path.join(STATIC_DIR, url.slice(1));
+    if (fs.existsSync(vp)) {
+      const st = fs.statSync(vp);
+      res.writeHead(200, { 'Content-Type':'video/mp4', 'Content-Length':st.size, 'Accept-Ranges':'bytes' });
+      return res.end();
+    }
+  }
+
   // Log video requests for debug
   if (url.endsWith('.mp4') || url.endsWith('.webm')) {
     console.log(`[video] ${req.method} ${url} Range: ${req.headers.range || 'none'}`);
   }
+
+  // ss.mp4: check public/ first, then root
+  if (url === '/ss.mp4') {
+    const pubVideo  = path.join(STATIC_DIR, 'ss.mp4');
+    const rootVideo = path.join(__dirname, 'ss.mp4');
+    if (fs.existsSync(pubVideo))  return serveFile(res, pubVideo, req);
+    if (fs.existsSync(rootVideo)) return serveFile(res, rootVideo, req);
+    console.error('[video] ss.mp4 not found in', STATIC_DIR, 'or', __dirname);
+    res.writeHead(404); return res.end('ss.mp4 not found');
+  }
+
   let filePath = path.join(STATIC_DIR, url === '/' ? 'index.html' : url);
   if (!filePath.startsWith(STATIC_DIR)) { res.writeHead(403); return res.end(); }
   if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) filePath = path.join(filePath, 'index.html');
