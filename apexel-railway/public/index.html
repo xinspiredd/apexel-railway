@@ -5129,10 +5129,10 @@ function rBuilds(cid){
 var _bmCid = null, _bmIdx = null;
 
 function toggleBuild(el, key) {
-  // key = "cid_idx"
-  var parts = key.split('_');
-  var cid = parts[0];
-  var idx = parseInt(parts[1]);
+  // key = "cid_idx" where cid may contain underscores (e.g. c_gtr_r34)
+  var lastUs = key.lastIndexOf('_');
+  var cid = key.substring(0, lastUs);
+  var idx = parseInt(key.substring(lastUs + 1));
   openBuildView(cid, idx, key);
 }
 
