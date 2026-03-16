@@ -4235,64 +4235,11 @@ async function publishTelegraph() {
   toast('Руководство опубликовано!');
 }
 
-async function viewTelegraph(guideId) {
-  var guide = guides.find(g => g.id === guideId);
-  if (!guide) return;
+function viewTelegraph(guideId) {
+  window.open('guide-view.html?id=' + encodeURIComponent(guideId), '_blank');
+}
 
-  // Increment views via API (silent)
-  apiFetch('/guides/' + guideId).then(function(r){
-    if (r.ok && r.data) {
-      guide.views = r.data.views || guide.views;
-    }
-  });
-  guide.views = (guide.views || 0) + 1;
-
-  var blocksHtml = '';
-  if (guide.blocks) {
-    guide.blocks.forEach(function(block) {
-      if (block.type === 'text') {
-        blocksHtml += '<div class="telegraph-view-block"><div class="telegraph-view-text">' + esc(block.content).replace(/\n/g, '<br>') + '</div></div>';
-      } else if (block.type === 'image' && block.content) {
-        blocksHtml += '<div class="telegraph-view-block"><div class="telegraph-view-image"><img src="' + block.content + '" alt=""></div></div>';
-      }
-    });
-  }
-
-  var views = guide.views || 0;
-  // Fix: API returns created_at (unix timestamp), date field may also exist
-  var dateStr = guide.date || '';
-  if (!dateStr && guide.created_at) {
-    dateStr = new Date(guide.created_at * 1000).toLocaleDateString('ru-RU', {day:'numeric',month:'short',year:'numeric'}) + ' г.';
-  }
-
-  // Open modal first with loading state for comments
-  var loadingHtml =
-    '<div class="back-button" onclick="closeTelegraphViewModal()">← Вернуться к руководствам</div>' +
-    '<div class="telegraph-view">' +
-    '<div class="telegraph-view-title">' + esc(guide.title) + '</div>' +
-    '<div class="telegraph-view-author">by ' + esc(guide.author) + '</div>' +
-    blocksHtml +
-    '<div class="telegraph-view-meta">' +
-    '<div>Опубликовано: ' + dateStr + '</div>' +
-    '<div class="telegraph-view-stats"><span>👁️ ' + views + '</span></div>' +
-    '</div>' +
-    '</div>' +
-    '<div class="guide-comments-section">' +
-    '<div class="guide-comments-title">Комментарии (загрузка...)</div>' +
-    '<div id="guide-comments-list_' + guideId + '"><div class="guide-no-comments" style="opacity:.4">Загрузка...</div></div>' +
-    '<div class="guide-comment-form">' +
-    '<textarea class="guide-comment-input" id="guide-cmt-input_' + guideId + '" placeholder="Написать комментарий..." rows="2"></textarea>' +
-    '<button class="guide-comment-submit" onclick="addGuideComment(\'' + guideId + '\')">Отправить →</button>' +
-    '</div>' +
-    '</div>';
-
-  document.getElementById('telegraphViewContent').innerHTML = loadingHtml;
-  var bg = document.getElementById('telegraphViewModal');
-  bg.style.display = 'flex';
-  requestAnimationFrame(function() { bg.classList.add('open'); });
-  document.body.style.overflow = 'hidden';
-
-  // Load comments from API
+async function _viewTelegraphLegacy(guideId) {
   var r = await apiFetch('/comments?type=guide&id=' + guideId);
   var comments = [];
   if (r.ok && Array.isArray(r.data)) {
