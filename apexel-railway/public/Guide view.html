@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEXEL · Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700&family=Barlow:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:  #080808;
+  --bg2: #0f0f12;
+  --tx:  #e8e8ec;
+  --mu:  rgba(255,255,255,.35);
+  --br:  rgba(255,255,255,.07);
+  --ac:  #9bbf5f;
+  --ac2: #7da348;
+  --red: #c47c7c;
+  --s1:  #141418;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--tx);
+  font-family: 'Barlow', sans-serif;
+  font-size: 17px;
+  line-height: 1.75;
+  min-height: 100vh;
+  -webkit-user-select: none;
+  user-select: none;
+}
+input, textarea { -webkit-user-select: text; user-select: text; }
+
+/* ── HEADER ─────────────────────────────────────────────────── */
+.gv-header {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 52px;
+  background: rgba(8,8,8,.92);
+  border-bottom: 1px solid var(--br);
+  backdrop-filter: blur(10px);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px;
+  z-index: 100;
+}
+.gv-logo {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.1rem; font-weight: 700; letter-spacing: .22em;
+  text-transform: uppercase; text-decoration: none; color: var(--tx);
+  opacity: .45; transition: opacity .2s;
+}
+.gv-logo:hover { opacity: 1; }
+.gv-logo span { color: var(--ac); }
+.gv-back {
+  display: inline-flex; align-items: center; gap: .5rem;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .72rem; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--mu); text-decoration: none;
+  background: none; border: 1px solid var(--br);
+  padding: .32rem .85rem; cursor: pointer; transition: all .15s;
+}
+.gv-back:hover { color: var(--tx); border-color: rgba(255,255,255,.2); }
+.gv-back svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+/* ── LOADING / ERROR ────────────────────────────────────────── */
+.gv-loader {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 12px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .72rem; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--mu);
+}
+.gv-spinner {
+  width: 24px; height: 24px;
+  border: 2px solid var(--br);
+  border-top-color: var(--ac);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── MAIN ───────────────────────────────────────────────────── */
+.gv-wrap {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 80px 24px 100px;
+  display: none;
+}
+.gv-wrap.show { display: block; animation: fadeUp .3s ease; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
+
+/* ── ARTICLE HEADER ─────────────────────────────────────────── */
+.gv-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 2.8rem; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase;
+  line-height: 1.05;
+  margin-bottom: 1rem;
+}
+.gv-meta {
+  display: flex; align-items: center; gap: 1.2rem;
+  padding-bottom: 1.2rem;
+  border-bottom: 1px solid var(--br);
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+.gv-author {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .8rem; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--ac);
+}
+.gv-date {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .72rem; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--mu);
+}
+.gv-views {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .72rem; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--mu);
+  display: flex; align-items: center; gap: .35rem;
+}
+.gv-views svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+/* ── CONTENT BLOCKS ─────────────────────────────────────────── */
+.gv-block { margin-bottom: 1.4rem; }
+
+.gv-text {
+  font-family: 'Barlow', sans-serif;
+  font-size: 1rem; line-height: 1.8;
+  color: rgba(232,232,236,.8);
+}
+
+.gv-heading {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.65rem; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase;
+  line-height: 1.2;
+  margin-top: 2rem; margin-bottom: .4rem;
+  color: var(--tx);
+}
+
+.gv-subheading {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.05rem; letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--mu); margin-bottom: .3rem;
+}
+
+.gv-quote {
+  border-left: 2px solid var(--ac);
+  padding: .6rem 0 .6rem 1.2rem;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.05rem; letter-spacing: .04em;
+  color: rgba(155,191,95,.8);
+  line-height: 1.6;
+}
+
+.gv-image-block { text-align: center; margin: 1.6rem 0; }
+.gv-image-block img {
+  max-width: 100%; display: block; margin: 0 auto;
+  background: var(--s1);
+}
+.gv-caption {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .75rem; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--mu);
+  margin-top: .5rem;
+}
+
+.gv-divider {
+  border: none; border-top: 1px solid rgba(155,191,95,.12);
+  margin: 1.8rem 0;
+}
+
+/* ── COMMENTS ───────────────────────────────────────────────── */
+.gv-comments-section {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--br);
+}
+.gv-comments-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .65rem; letter-spacing: .24em; text-transform: uppercase;
+  color: var(--mu); margin-bottom: 1.2rem;
+}
+.gv-comment {
+  padding: .8rem 0;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+}
+.gv-cmt-author {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .8rem; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ac); margin-bottom: .25rem;
+}
+.gv-cmt-text {
+  font-size: .9rem; color: var(--mu); line-height: 1.6;
+}
+.gv-no-comments {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .78rem; letter-spacing: .14em;
+  color: rgba(255,255,255,.15); padding: .5rem 0;
+}
+.gv-cmt-form {
+  display: flex; gap: .6rem; margin-top: 1.2rem;
+}
+.gv-cmt-input {
+  flex: 1;
+  background: var(--s1);
+  border: 1px solid var(--br);
+  color: var(--tx);
+  padding: .65rem .9rem;
+  font-family: 'Barlow', sans-serif; font-size: .9rem;
+  outline: none; resize: none;
+  transition: border-color .15s;
+}
+.gv-cmt-input:focus { border-color: rgba(155,191,95,.3); }
+.gv-cmt-input::placeholder { color: rgba(255,255,255,.15); }
+.gv-cmt-btn {
+  background: var(--ac); border: none; cursor: pointer;
+  width: 40px; height: 40px; flex-shrink: 0;
+  align-self: flex-end;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+}
+.gv-cmt-btn:hover { background: var(--ac2); }
+.gv-cmt-btn svg { width: 15px; height: 15px; stroke: #080808; fill: none; stroke-width: 2.2; }
+.gv-login-hint {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .72rem; letter-spacing: .14em;
+  color: rgba(255,255,255,.2); padding: .5rem 0;
+}
+
+/* ── NOT FOUND ──────────────────────────────────────────────── */
+.gv-error {
+  position: fixed; inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 10px;
+  font-family: 'Barlow Condensed', sans-serif;
+  letter-spacing: .18em; text-transform: uppercase; color: var(--mu);
+}
+.gv-error.show { display: flex; }
+.gv-error-code { font-size: 3rem; font-weight: 700; color: rgba(255,255,255,.06); }
+</style>
+</head>
+<body>
+
+<header class="gv-header">
+  <a href="index.html" class="gv-logo">APEX<span>EL</span></a>
+  <a href="javascript:history.back()" class="gv-back">
+    <svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>
+    Back
+  </a>
+</header>
+
+<!-- Loader -->
+<div class="gv-loader" id="gvLoader">
+  <div class="gv-spinner"></div>
+  Loading guide…
+</div>
+
+<!-- Error -->
+<div class="gv-error" id="gvError">
+  <div class="gv-error-code">404</div>
+  <div>Guide not found</div>
+  <a href="index.html" style="color:var(--ac);font-size:.72rem;letter-spacing:.18em;text-decoration:none;margin-top:.5rem">← Back to APEXEL</a>
+</div>
+
+<!-- Article -->
+<main class="gv-wrap" id="gvWrap">
+  <h1 class="gv-title" id="gvTitle"></h1>
+  <div class="gv-meta">
+    <span class="gv-author" id="gvAuthor"></span>
+    <span class="gv-date" id="gvDate"></span>
+    <span class="gv-views">
+      <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      <span id="gvViews">0</span>
+    </span>
+  </div>
+  <div id="gvContent"></div>
+
+  <!-- Comments -->
+  <div class="gv-comments-section">
+    <div class="gv-comments-title">Comments — <span id="gvCmtCount">0</span></div>
+    <div id="gvCmtList"></div>
+    <div id="gvCmtFormWrap"></div>
+  </div>
+</main>
+
+<script>
+var API = (function(){
+  var o = window.location.origin;
+  if (!o || o === 'null' || o.startsWith('file')) return 'http://localhost:3000/api';
+  return o + '/api';
+})();
+var _authToken = localStorage.getItem('apexel_token') || sessionStorage.getItem('apexel_token') || '';
+var _authUser = null;
+var _guideId = null;
+
+// ── GET GUIDE ID FROM URL ─────────────────────────────────────
+function getGuideId() {
+  var params = new URLSearchParams(window.location.search);
+  return params.get('id');
+}
+
+// ── AUTH ──────────────────────────────────────────────────────
+async function initAuth() {
+  if (!_authToken) return;
+  try {
+    var r = await fetch(API + '/auth/me', { headers: { Authorization: 'Bearer ' + _authToken } });
+    if (r.ok) _authUser = await r.json();
+  } catch(e) {}
+}
+
+// ── LOAD GUIDE ────────────────────────────────────────────────
+async function loadGuide() {
+  _guideId = getGuideId();
+  if (!_guideId) { showError(); return; }
+
+  try {
+    var r = await fetch(API + '/guides/' + _guideId);
+    if (!r.ok) { showError(); return; }
+    var guide = await r.json();
+    renderGuide(guide);
+    loadComments();
+  } catch(e) {
+    showError();
+  }
+}
+
+function renderGuide(guide) {
+  document.title = 'APEXEL · ' + (guide.title || 'Guide');
+
+  document.getElementById('gvTitle').textContent = guide.title || '';
+  document.getElementById('gvAuthor').textContent = 'by ' + (guide.author || 'Anonymous');
+  document.getElementById('gvViews').textContent = (guide.views || 0) + ' views';
+
+  if (guide.created_at) {
+    var d = new Date(guide.created_at * 1000);
+    document.getElementById('gvDate').textContent = d.toLocaleDateString('en-US', { day:'numeric', month:'short', year:'numeric' });
+  }
+
+  var blocks = guide.blocks || [];
+  var html = '';
+  blocks.forEach(function(b) {
+    if (b.type === 'text' && b.content) {
+      html += '<div class="gv-block gv-text">' + esc(b.content).replace(/\n/g,'<br>') + '</div>';
+    } else if (b.type === 'heading' && b.content) {
+      html += '<div class="gv-block gv-heading">' + esc(b.content) + '</div>';
+    } else if (b.type === 'subheading' && b.content) {
+      html += '<div class="gv-block gv-subheading">' + esc(b.content) + '</div>';
+    } else if (b.type === 'quote' && b.content) {
+      html += '<div class="gv-block gv-quote">' + esc(b.content) + '</div>';
+    } else if (b.type === 'image' && b.content) {
+      html += '<div class="gv-block gv-image-block"><img src="' + b.content + '" alt="">' +
+        (b.caption ? '<div class="gv-caption">' + esc(b.caption) + '</div>' : '') + '</div>';
+    } else if (b.type === 'divider') {
+      html += '<hr class="gv-divider">';
+    }
+  });
+
+  document.getElementById('gvContent').innerHTML = html || '<div class="gv-text" style="opacity:.3">No content</div>';
+
+  // Show
+  document.getElementById('gvLoader').style.display = 'none';
+  document.getElementById('gvWrap').classList.add('show');
+
+  // Comment form
+  renderCommentForm();
+}
+
+async function loadComments() {
+  try {
+    var r = await fetch(API + '/comments?type=guide&id=' + _guideId);
+    if (!r.ok) return;
+    var comments = await r.json();
+    renderComments(Array.isArray(comments) ? comments : []);
+  } catch(e) {}
+}
+
+function renderComments(comments) {
+  document.getElementById('gvCmtCount').textContent = comments.length;
+  var html = '';
+  if (!comments.length) {
+    html = '<div class="gv-no-comments">No comments yet — be first!</div>';
+  } else {
+    comments.forEach(function(c) {
+      html += '<div class="gv-comment"><div class="gv-cmt-author">' + esc(c.author || 'Anonymous') + '</div>' +
+        '<div class="gv-cmt-text">' + esc(c.text || '') + '</div></div>';
+    });
+  }
+  document.getElementById('gvCmtList').innerHTML = html;
+}
+
+function renderCommentForm() {
+  var wrap = document.getElementById('gvCmtFormWrap');
+  if (!_authUser) {
+    wrap.innerHTML = '<div class="gv-login-hint">Log in to APEXEL to leave a comment</div>';
+    return;
+  }
+  wrap.innerHTML =
+    '<div class="gv-cmt-form">' +
+    '<textarea class="gv-cmt-input" id="gvCmtInput" rows="2" placeholder="Write a comment…"></textarea>' +
+    '<button class="gv-cmt-btn" onclick="submitComment()" title="Post">' +
+      '<svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>' +
+    '</button>' +
+    '</div>';
+}
+
+async function submitComment() {
+  if (!_authUser || !_guideId) return;
+  var input = document.getElementById('gvCmtInput');
+  var text = (input.value || '').trim();
+  if (!text) return;
+
+  try {
+    var r = await fetch(API + '/comments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _authToken },
+      body: JSON.stringify({ type: 'guide', id: _guideId, text: text })
+    });
+    if (r.ok) {
+      input.value = '';
+      loadComments();
+    }
+  } catch(e) {}
+}
+
+// ── UTILS ─────────────────────────────────────────────────────
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function showError() {
+  document.getElementById('gvLoader').style.display = 'none';
+  document.getElementById('gvError').classList.add('show');
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+initAuth().then(function() {
+  loadGuide();
+  // Refresh comment form after auth
+  var wrap = document.getElementById('gvCmtFormWrap');
+  if (wrap && wrap.children.length) renderCommentForm();
+});
+
+// Enter to submit comment
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey && document.activeElement.id === 'gvCmtInput') {
+    e.preventDefault();
+    submitComment();
+  }
+});
+</script>
+</body>
+</html>
