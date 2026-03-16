@@ -109,6 +109,24 @@ button,a{cursor:pointer}
 .is svg{width:9px;height:9px;stroke:currentColor;fill:none}
 
 /* ── TOAST ─── */
+.pf-follow-btn{
+  display:inline-flex;align-items:center;gap:.5rem;
+  font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;
+  padding:.4rem 1rem;border:1px solid rgba(155,191,95,.35);
+  background:none;color:var(--ac);cursor:pointer;transition:all .15s;
+}
+.pf-follow-btn:hover{background:rgba(155,191,95,.08);border-color:var(--ac)}
+.pf-follow-btn.following{border-color:rgba(255,255,255,.12);color:var(--mu);background:rgba(255,255,255,.04)}
+.pf-follow-btn.following:hover{border-color:var(--red);color:var(--red);background:rgba(196,124,124,.06)}
+.pf-follow-btn svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2}
+
+.pf-user-row{display:flex;align-items:center;gap:.9rem;padding:.75rem 1rem;background:var(--s1);border:1px solid var(--br);margin-bottom:4px;cursor:pointer;text-decoration:none;color:inherit;transition:background .15s,border-color .15s}
+.pf-user-row:hover{background:var(--s2);border-color:rgba(155,191,95,.15)}
+.pf-user-avatar{width:36px;height:36px;border-radius:50%;background:rgba(155,191,95,.1);border:1px solid rgba(155,191,95,.2);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;color:var(--ac);flex-shrink:0;overflow:hidden}
+.pf-user-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.pf-user-name{font-family:'Barlow Condensed',sans-serif;font-size:.95rem;letter-spacing:.06em}
+.pf-user-role{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--mu)}
+
 .pf-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ac);color:#080808;font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;padding:.55rem 1.3rem;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;z-index:999}
 .pf-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
@@ -117,7 +135,7 @@ button,a{cursor:pointer}
 
 <header class="pf-header">
   <a href="index.html" class="pf-logo">APEX<span>EL</span></a>
-  <a href="javascript:history.back()" class="pf-back">
+  <a href="index.html" class="pf-back">
     <svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back
   </a>
 </header>
@@ -142,11 +160,14 @@ button,a{cursor:pointer}
       <div class="pf-username" id="pfUsername"></div>
       <div class="pf-role-badge" id="pfRoleBadge"></div>
       <div class="pf-joined" id="pfJoined"></div>
+      <div id="pfFollowWrap" style="margin-top:.8rem"></div>
       <div class="pf-stats">
         <div class="pf-stat"><div class="pf-stat-val" id="pfStatBuilds">0</div><div class="pf-stat-lbl">Builds</div></div>
         <div class="pf-stat"><div class="pf-stat-val" id="pfStatVinyls">0</div><div class="pf-stat-lbl">Vinyls</div></div>
         <div class="pf-stat"><div class="pf-stat-val" id="pfStatGuides">0</div><div class="pf-stat-lbl">Guides</div></div>
-        <div class="pf-stat"><div class="pf-stat-val" id="pfStatLikes">0</div><div class="pf-stat-lbl">Total likes</div></div>
+        <div class="pf-stat"><div class="pf-stat-val" id="pfStatLikes">0</div><div class="pf-stat-lbl">Likes</div></div>
+        <div class="pf-stat"><div class="pf-stat-val" id="pfStatFollowers">0</div><div class="pf-stat-lbl">Followers</div></div>
+        <div class="pf-stat"><div class="pf-stat-val" id="pfStatFollowing">0</div><div class="pf-stat-lbl">Following</div></div>
       </div>
     </div>
   </div>
@@ -164,6 +185,14 @@ button,a{cursor:pointer}
     <button class="pf-tab" onclick="switchTab('guides',this)">
       <svg style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
       Guides <span class="pf-tab-cnt" id="tabCntGuides">0</span>
+    </button>
+    <button class="pf-tab" onclick="switchTab('following',this)">
+      <svg style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Following <span class="pf-tab-cnt" id="tabCntFollowing">0</span>
+    </button>
+    <button class="pf-tab" onclick="switchTab('followers',this)">
+      <svg style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Followers <span class="pf-tab-cnt" id="tabCntFollowers">0</span>
     </button>
   </div>
 
@@ -194,86 +223,150 @@ var API = (function(){
 var _authToken = localStorage.getItem('apexel_token') || sessionStorage.getItem('apexel_token') || '';
 var _authUser = null;
 var _profileData = null;
+var _followData = null;
 
 function getUsername() {
   return new URLSearchParams(window.location.search).get('u') || '';
 }
 
 async function init() {
-  // Auth
   if (_authToken) {
     try {
       var r = await fetch(API + '/auth/me', { headers: { Authorization: 'Bearer ' + _authToken } });
       if (r.ok) _authUser = await r.json();
     } catch(e) {}
   }
-
   var uname = getUsername();
   if (!uname) { showError('No user specified'); return; }
-
   try {
-    var r = await fetch(API + '/users/' + encodeURIComponent(uname) + '/profile');
-    if (!r.ok) { showError('User not found'); return; }
-    _profileData = await r.json();
-    renderProfile(_profileData);
-  } catch(e) {
-    showError('Failed to load profile');
-  }
+    var [profRes, followRes] = await Promise.all([
+      fetch(API + '/users/' + encodeURIComponent(uname) + '/profile'),
+      fetch(API + '/follows/' + encodeURIComponent(uname), { headers: _authToken ? {Authorization:'Bearer '+_authToken} : {} })
+    ]);
+    if (!profRes.ok) { showError('User not found'); return; }
+    _profileData = await profRes.json();
+    _followData = followRes.ok ? await followRes.json() : { followers:0, following:0, followersList:[], followingList:[], isFollowing:false };
+    renderProfile(_profileData, _followData);
+  } catch(e) { showError('Failed to load profile'); }
 }
 
-function renderProfile(data) {
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function ist(cls, val) {
+  var icons = { spd:'<svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>', acc:'<svg viewBox="0 0 24 24"><polyline points="23,6 13.5,15.5 8.5,10.5 1,18"/></svg>', hdl:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>' };
+  return '<span class="is '+cls+'">'+icons[cls]+'+'+val+'</span>';
+}
+
+function renderProfile(data, followData) {
   var user = data.user;
   document.title = 'APEXEL · ' + user.username;
 
   // Avatar
   var avatarEl = document.getElementById('pfAvatar');
   if (user.avatar) {
-    avatarEl.innerHTML = '<img src="' + user.avatar + '" alt="">';
+    avatarEl.innerHTML = '<img src="' + esc(user.avatar) + '" alt="">';
   } else {
     avatarEl.textContent = user.username[0].toUpperCase();
   }
 
-  // Show edit button only for own profile
-  var isOwn = _authUser && _authUser.username === user.username;
+  var isOwn = _authUser && _authUser.username.toLowerCase() === user.username.toLowerCase();
   if (isOwn) document.getElementById('pfAvatarEdit').style.display = 'flex';
 
-  // Info
   document.getElementById('pfUsername').textContent = user.username;
-  var roleBadge = document.getElementById('pfRoleBadge');
-  roleBadge.textContent = user.role;
-  roleBadge.className = 'pf-role-badge ' + user.role;
+  var rb = document.getElementById('pfRoleBadge');
+  rb.textContent = user.role; rb.className = 'pf-role-badge ' + user.role;
 
   if (user.created_at) {
     var d = new Date(user.created_at * 1000);
-    document.getElementById('pfJoined').textContent = 'Joined ' + d.toLocaleDateString('en-US', { month:'long', year:'numeric' });
+    document.getElementById('pfJoined').textContent = 'Joined ' + d.toLocaleDateString('en-US',{month:'long',year:'numeric'});
   }
 
-  // Stats
-  var totalLikes = (data.builds || []).reduce(function(a, b) { return a + (b.likes || 0); }, 0);
-  document.getElementById('pfStatBuilds').textContent = (data.builds || []).length;
-  document.getElementById('pfStatVinyls').textContent = (data.vinyls || []).length;
-  document.getElementById('pfStatGuides').textContent = (data.guides || []).length;
-  document.getElementById('pfStatLikes').textContent = totalLikes;
+  var totalLikes = (data.builds||[]).reduce(function(a,b){return a+(b.likes||0);},0);
+  document.getElementById('pfStatBuilds').textContent   = (data.builds||[]).length;
+  document.getElementById('pfStatVinyls').textContent   = (data.vinyls||[]).length;
+  document.getElementById('pfStatGuides').textContent   = (data.guides||[]).length;
+  document.getElementById('pfStatLikes').textContent    = totalLikes;
+  document.getElementById('pfStatFollowers').textContent = followData.followers || 0;
+  document.getElementById('pfStatFollowing').textContent = followData.following || 0;
 
-  // Tab counts
-  document.getElementById('tabCntBuilds').textContent = (data.builds || []).length;
-  document.getElementById('tabCntVinyls').textContent = (data.vinyls || []).length;
-  document.getElementById('tabCntGuides').textContent = (data.guides || []).length;
+  document.getElementById('tabCntBuilds').textContent   = (data.builds||[]).length;
+  document.getElementById('tabCntVinyls').textContent   = (data.vinyls||[]).length;
+  document.getElementById('tabCntGuides').textContent   = (data.guides||[]).length;
+  document.getElementById('tabCntFollowing').textContent = followData.following || 0;
+  document.getElementById('tabCntFollowers').textContent = followData.followers || 0;
 
-  // Builds
-  renderBuilds(data.builds || []);
-  renderVinyls(data.vinyls || []);
-  renderGuides(data.guides || []);
+  // Follow button
+  var wrap = document.getElementById('pfFollowWrap');
+  if (!isOwn && _authUser) {
+    var isFollowing = followData.isFollowing;
+    wrap.innerHTML = renderFollowBtn(user.username, isFollowing);
+  }
 
-  // Show
+  renderBuilds(data.builds||[]);
+  renderVinyls(data.vinyls||[]);
+  renderGuides(data.guides||[]);
+  renderFollowLists(followData);
+
   document.getElementById('pfLoader').style.display = 'none';
   document.getElementById('pfWrap').classList.add('show');
 }
 
-function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function ist(cls, val) {
-  var icons = { spd:'<svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>', acc:'<svg viewBox="0 0 24 24"><polyline points="23,6 13.5,15.5 8.5,10.5 1,18"/></svg>', hdl:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>' };
-  return '<span class="is ' + cls + '">' + icons[cls] + '+' + val + '</span>';
+function renderFollowBtn(username, isFollowing) {
+  if (isFollowing) {
+    return '<button class="pf-follow-btn following" onclick="toggleFollow('' + esc(username) + '',true)">' +
+      '<svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg>Following</button>';
+  }
+  return '<button class="pf-follow-btn" onclick="toggleFollow('' + esc(username) + '',false)">' +
+    '<svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>Follow</button>';
+}
+
+async function toggleFollow(username, isCurrentlyFollowing) {
+  if (!_authUser) { showToast('Log in to follow users'); return; }
+  var method = isCurrentlyFollowing ? 'DELETE' : 'POST';
+  try {
+    var r = await fetch(API + '/follows/' + encodeURIComponent(username), {
+      method: method, headers: { Authorization: 'Bearer ' + _authToken }
+    });
+    if (r.ok) {
+      var d = await r.json();
+      document.getElementById('pfFollowWrap').innerHTML = renderFollowBtn(username, d.following);
+      // Update followers count
+      var cnt = document.getElementById('pfStatFollowers');
+      if (cnt) cnt.textContent = parseInt(cnt.textContent||0) + (d.following ? 1 : -1);
+      var cnt2 = document.getElementById('tabCntFollowers');
+      if (cnt2) cnt2.textContent = parseInt(cnt2.textContent||0) + (d.following ? 1 : -1);
+      showToast(d.following ? 'Now following ' + username : 'Unfollowed ' + username);
+    }
+  } catch(e) { showToast('Error — try again'); }
+}
+
+function renderFollowLists(followData) {
+  // Following
+  var fgList = followData.followingList || [];
+  var fgEl = document.getElementById('followingList');
+  document.getElementById('emptyFollowing').style.display = fgList.length ? 'none' : '';
+  if (fgList.length) {
+    fgEl.innerHTML = fgList.map(function(f) {
+      var init = (f.target_username||'?')[0].toUpperCase();
+      return '<a class="pf-user-row" href="profile.html?u=' + esc(f.target_username) + '">' +
+        '<div class="pf-user-avatar">' + (f.avatar ? '<img src="'+esc(f.avatar)+'">' : init) + '</div>' +
+        '<div><div class="pf-user-name">' + esc(f.target_username) + '</div>' +
+        '<div class="pf-user-role">' + esc(f.role||'user') + '</div></div>' +
+      '</a>';
+    }).join('');
+  }
+  // Followers
+  var frList = followData.followersList || [];
+  var frEl = document.getElementById('followersList');
+  document.getElementById('emptyFollowers').style.display = frList.length ? 'none' : '';
+  if (frList.length) {
+    frEl.innerHTML = frList.map(function(f) {
+      var init = (f.username||'?')[0].toUpperCase();
+      return '<a class="pf-user-row" href="profile.html?u=' + esc(f.username) + '">' +
+        '<div class="pf-user-avatar">' + init + '</div>' +
+        '<div><div class="pf-user-name">' + esc(f.username) + '</div></div>' +
+      '</a>';
+    }).join('');
+  }
 }
 
 function renderBuilds(builds) {
@@ -282,19 +375,15 @@ function renderBuilds(builds) {
   if (!builds.length) return;
   var html = '';
   builds.forEach(function(b) {
-    var parts = b.parts || {};
+    var parts = b.parts||{};
     var s=0,a=0,h=0;
     Object.values(parts).forEach(function(p){if(p){s+=p.spd;a+=p.acc;h+=p.hdl;}});
-    var carLabel = [(b.car_maker||''), (b.car_name||'')].filter(Boolean).join(' ');
-    html += '<div class="pf-build-row">' +
-      '<div class="pf-cls-badge">' + esc(b.car_cls||'?') + '</div>' +
-      '<div style="flex:1;min-width:0">' +
-        '<div class="pf-build-name">' + esc(b.name||'Untitled') + '</div>' +
-        '<div class="pf-build-car">' + esc(carLabel) + '</div>' +
-      '</div>' +
-      '<div class="pf-build-stats">' + ist('spd',s) + ist('acc',a) + ist('hdl',h) + '</div>' +
-      '<div class="pf-likes"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' + (b.likes||0) + '</div>' +
-    '</div>';
+    var carLabel = [(b.car_maker||''),(b.car_name||'')].filter(Boolean).join(' ');
+    html += '<div class="pf-build-row"><div class="pf-cls-badge">'+esc(b.car_cls||'?')+'</div>' +
+      '<div style="flex:1;min-width:0"><div class="pf-build-name">'+esc(b.name||'Untitled')+'</div>' +
+      '<div class="pf-build-car">'+esc(carLabel)+'</div></div>' +
+      '<div class="pf-build-stats">'+ist('spd',s)+ist('acc',a)+ist('hdl',h)+'</div>' +
+      '<div class="pf-likes"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'+(b.likes||0)+'</div></div>';
   });
   container.innerHTML = html;
 }
@@ -305,17 +394,12 @@ function renderVinyls(vinyls) {
   if (!vinyls.length) return;
   var html = '';
   vinyls.forEach(function(v) {
-    var carLabel = [(v.car_maker||''), (v.car_name||'')].filter(Boolean).join(' ');
+    var carLabel = [(v.car_maker||''),(v.car_name||'')].filter(Boolean).join(' ');
     html += '<div class="pf-vinyl-row">';
-    if (v.image) {
-      html += '<img class="pf-vinyl-thumb" src="' + esc(v.image) + '" alt="">';
-    } else {
-      html += '<div class="pf-vinyl-thumb" style="display:flex;align-items:center;justify-content:center"><svg style="width:16px;height:16px;stroke:var(--mu);fill:none;stroke-width:1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg></div>';
-    }
-    html += '<div style="flex:1;min-width:0"><div class="pf-vinyl-name">' + esc(v.name||'Untitled') + '</div>' +
-      '<div class="pf-vinyl-car">' + esc(carLabel) + '</div></div>' +
-      '<div class="pf-likes"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' + (v.likes||0) + '</div>' +
-    '</div>';
+    if (v.image) { html += '<img class="pf-vinyl-thumb" src="'+esc(v.image)+'" alt="">'; }
+    else { html += '<div class="pf-vinyl-thumb" style="display:flex;align-items:center;justify-content:center"><svg style="width:16px;height:16px;stroke:var(--mu);fill:none;stroke-width:1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg></div>'; }
+    html += '<div style="flex:1;min-width:0"><div class="pf-vinyl-name">'+esc(v.name||'Untitled')+'</div><div class="pf-vinyl-car">'+esc(carLabel)+'</div></div>' +
+      '<div class="pf-likes"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'+(v.likes||0)+'</div></div>';
   });
   container.innerHTML = html;
 }
@@ -327,51 +411,47 @@ function renderGuides(guides) {
   var html = '';
   guides.forEach(function(g) {
     var date = g.created_at ? new Date(g.created_at*1000).toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'}) : '';
-    html += '<a class="pf-guide-row" href="guide-view.html?id=' + esc(g.id) + '" target="_blank">' +
+    html += '<a class="pf-guide-row" href="guide-view.html?id='+esc(g.id)+'" target="_blank">' +
       '<div class="pf-guide-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg></div>' +
-      '<div class="pf-guide-title">' + esc(g.title||'Untitled') + '</div>' +
-      '<div class="pf-guide-meta"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>' + (g.views||0) + ' · ' + date + '</div>' +
+      '<div class="pf-guide-title">'+esc(g.title||'Untitled')+'</div>' +
+      '<div class="pf-guide-meta"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'+(g.views||0)+' · '+date+'</div>' +
     '</a>';
   });
   container.innerHTML = html;
 }
 
-// ── TABS ──────────────────────────────────────────────────────
 function switchTab(name, btn) {
   document.querySelectorAll('.pf-tab').forEach(function(b){ b.classList.remove('active'); });
   document.querySelectorAll('.pf-panel').forEach(function(p){ p.classList.remove('active'); });
   btn.classList.add('active');
-  document.getElementById('panel-' + name).classList.add('active');
+  document.getElementById('panel-'+name).classList.add('active');
 }
 
-// ── AVATAR UPLOAD ─────────────────────────────────────────────
 function uploadAvatar(event) {
   var file = event.target.files[0];
   if (!file) return;
-  if (file.size > 2 * 1024 * 1024) { showToast('Image too large (max 2MB)'); return; }
+  if (file.size > 2*1024*1024) { showToast('Image too large (max 2MB)'); return; }
   var reader = new FileReader();
   reader.onload = async function(e) {
     var data = e.target.result;
     try {
       var r = await fetch(API + '/users/me/avatar', {
         method: 'PATCH',
-        headers: { 'Content-Type':'application/json', 'Authorization':'Bearer ' + _authToken },
+        headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+_authToken },
         body: JSON.stringify({ avatar: data })
       });
       if (r.ok) {
-        var avatarEl = document.getElementById('pfAvatar');
-        avatarEl.innerHTML = '<img src="' + data + '" alt="">';
-        showToast('Avatar updated');
+        document.getElementById('pfAvatar').innerHTML = '<img src="'+data+'" alt="">';
+        showToast('Avatar updated ✓');
       } else {
         var err = await r.json();
-        showToast('Error: ' + (err.error || 'failed'));
+        showToast('Error: '+(err.error||'failed'));
       }
     } catch(e) { showToast('Network error'); }
   };
   reader.readAsDataURL(file);
 }
 
-// ── TOAST ─────────────────────────────────────────────────────
 var _toastT = null;
 function showToast(msg) {
   var el = document.getElementById('pfToast');
@@ -380,7 +460,7 @@ function showToast(msg) {
   _toastT = setTimeout(function(){ el.classList.remove('show'); }, 3000);
 }
 function showError(msg) {
-  document.getElementById('pfLoader').innerHTML = '<div style="color:var(--mu);font-family:\'Barlow Condensed\',sans-serif;font-size:.78rem;letter-spacing:.18em;text-transform:uppercase">' + msg + '</div>';
+  document.getElementById('pfLoader').innerHTML = '<div style="color:var(--mu);font-family:'Barlow Condensed',sans-serif;font-size:.78rem;letter-spacing:.18em;text-transform:uppercase">'+msg+'</div>';
 }
 
 init();
