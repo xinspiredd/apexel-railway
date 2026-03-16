@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEXEL · 404</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#080808;--tx:#e8e8ec;--mu:rgba(255,255,255,.25);--ac:#9bbf5f;--ac2:#7da348}
+html,body{background:var(--bg);color:var(--tx);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Barlow Condensed',monospace;overflow:hidden;user-select:none}
+.page{display:flex;flex-direction:column;align-items:center;gap:0;animation:fadeIn .6s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.ascii-car{font-family:'Courier New',monospace;font-size:14px;line-height:1.15;color:rgba(155,191,95,.6);white-space:pre;display:block;text-align:center;cursor:pointer;animation:carDrift 4s ease-in-out infinite;margin-bottom:1.6rem;transition:color .3s,text-shadow .3s}
+.ascii-car:hover{color:rgba(155,191,95,1);text-shadow:0 0 20px rgba(155,191,95,.3)}
+@keyframes carDrift{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.code-404{font-size:5.5rem;font-weight:700;letter-spacing:.14em;color:rgba(255,255,255,.04);line-height:1;margin-bottom:.3rem;position:relative}
+.code-404::after{content:'404';position:absolute;inset:0;color:var(--ac);opacity:.2}
+.msg{font-size:.78rem;letter-spacing:.28em;text-transform:uppercase;color:var(--mu);margin-bottom:1.8rem}
+.btn-home{display:inline-flex;align-items:center;gap:.6rem;background:none;border:1px solid rgba(155,191,95,.28);color:var(--ac);font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.22em;text-transform:uppercase;padding:.55rem 1.3rem;cursor:pointer;text-decoration:none;transition:all .2s}
+.btn-home:hover{border-color:var(--ac);color:var(--tx);background:rgba(155,191,95,.06)}
+.btn-home svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0}
+.speed-lines{position:fixed;inset:0;pointer-events:none;overflow:hidden;opacity:.04}
+.speed-line{position:absolute;height:1px;background:var(--ac);animation:speedLine linear infinite}
+@keyframes speedLine{from{transform:translateX(100vw);opacity:0}10%{opacity:1}90%{opacity:1}to{transform:translateX(-100vw);opacity:0}}
+.logo{position:fixed;top:22px;left:26px;font-family:'Barlow Condensed',sans-serif;font-size:1.05rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;text-decoration:none;color:var(--tx);opacity:.28;transition:opacity .2s}
+.logo:hover{opacity:.8}
+.logo span{color:var(--ac)}
+</style>
+</head>
+<body>
+<div class="speed-lines" id="speedLines"></div>
+<a href="index.html" class="logo">APEX<span>EL</span></a>
+<div class="page">
+  <pre class="ascii-car" id="asciiCar" onclick="window.location.href='index.html'" title="Click — back to garage"></pre>
+  <div class="code-404">404</div>
+  <div class="msg">This road leads nowhere</div>
+  <a href="index.html" class="btn-home">
+    <svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>
+    Back to the Garage
+  </a>
+</div>
+<script>
+var CAR_ART = `⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡠⠴⠶⠶⠶⠶⠖⠺⠿⠷⠶⠶⠶⠶⣶⡶⠶⢶⣦⠤⣀⣀⣀⣀⣀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡤⠖⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡜⡝⠀⠀⠀⠈⢹⠛⢟⢯⣹⡿⠛⠂⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣔⣋⣀⣀⣀⣀⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡼⢠⣇⠀⠀⢀⣤⠤⢷⡌⠃⠙⣓⣲⣦⡀⠀
+⠀⠀⠀⠀⠀⢀⣀⡤⠤⠖⠚⠛⠛⠋⠀⠀⠀⠀⠀⠀⠐⠛⠋⠀⢀⡀⣀⠤⠝⠛⣛⡋⠉⢻⠙⠒⠉⣉⠀⠠⠔⠚⡏⠉⠁⢀⣀⢻⠀
+⠀⠀⣀⣴⣾⡟⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⡠⠤⠒⣊⡉⢤⣶⡧⠔⠊⣉⠁⠙⣤⠼⠒⠉⠁⠀⠀⠀⠀⢀⠇⠀⣠⣿⣿⣿⣿
+⢀⡾⡿⢋⣀⣀⣈⣉⣉⡉⠉⠉⠀⠀⠀⠈⠉⠉⣀⠤⠺⡉⣠⡾⠛⠁⣠⣾⣿⠿⣿⣦⠘⡄⠀⠀⠀⠀⠀⠀⠀⡸⠀⠀⣿⣿⣿⣿⠏
+⣿⣽⣷⠟⠛⠿⢿⠉⠉⠿⠿⠿⠿⠟⣧⠀⠀⡮⠤⠴⠖⣿⠟⠒⠉⢹⣿⣽⡿⣇⣼⣿⡆⠸⡀⠀⠀⠀⠀⠀⢀⣇⡀⢰⣿⣿⣿⡿⢠
+⣷⣿⣯⣉⣉⡀⠘⠛⠛⠒⠒⠒⠒⠂⣿⠀⠀⡀⠀⠀⢀⡟⠀⠀⠀⣿⣷⣯⣷⣿⣌⣿⡇⠀⢣⣀⣤⢔⣒⡮⠽⢑⣒⣸⢻⣿⣿⠁⠈
+⣟⣻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣖⠀⣿⠀⠀⣷⣶⣶⣾⡇⠀⠀⢸⣿⣿⠟⣿⣭⣉⣿⡧⠤⢚⣒⡭⠥⠒⠚⠉⠁⠀⠀⠀⠙⠁⠀⠀
+⠷⢾⣿⣾⣿⣷⣿⣿⣿⣿⣿⡿⠿⣶⢿⣦⣤⣴⣯⣾⣶⠷⠶⠚⢉⡇⡟⣿⢹⡌⢠⡿⠒⠒⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠈⠉⠉⠛⠛⠛⠿⠿⠿⠿⠿⠿⠿⠿⠦⠤⠶⠤⠶⠯⠭⢅⣷⡘⣞⡨⣴⠟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀`;
+
+document.getElementById('asciiCar').textContent = CAR_ART;
+
+// Speed lines bg
+var container = document.getElementById('speedLines');
+for (var i = 0; i < 18; i++) {
+  var line = document.createElement('div');
+  line.className = 'speed-line';
+  var top = Math.random() * 100;
+  var width = 60 + Math.random() * 280;
+  var dur = 1.5 + Math.random() * 3;
+  var delay = -(Math.random() * 5);
+  line.style.cssText = 'top:'+top+'%;width:'+width+'px;animation-duration:'+dur+'s;animation-delay:'+delay+'s';
+  container.appendChild(line);
+}
+</script>
+</body>
+</html>
