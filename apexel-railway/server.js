@@ -683,6 +683,31 @@ route('DELETE', '/api/users/me/telegram-link', async (req, res) => {
   json(res, 200, { ok: true });
 });
 
+// ─── PROFILE / AVATAR ─────────────────────────────────────────
+route('GET', '/api/users/:username/profile', async (req, res) => {
+  const u = db.prepare('SELECT id,username,role,avatar,created_at FROM users WHERE username=? COLLATE NOCASE').get(req.params.username);
+  if (!u) return json(res, 404, { error: 'Not found' });
+  // builds
+  const builds = db.prepare('SELECT b.*,c.name as car_name,c.maker as car_maker,c.cls as car_cls FROM builds b LEFT JOIN cars c ON b.car_id=c.id WHERE b.user_id=? ORDER BY b.created_at DESC').all(u.id);
+  const buildsOut = builds.map(b => ({ ...b, parts: JSON.parse(b.parts||'{}') }));
+  // vinyls
+  const vinyls = db.prepare('SELECT v.*,c.name as car_name,c.maker as car_maker FROM vinyls v LEFT JOIN cars c ON v.car_id=c.id WHERE v.user_id=? ORDER BY v.created_at DESC').all(u.id);
+  // guides
+  const guides = db.prepare('SELECT id,title,views,created_at FROM guides WHERE user_id=? ORDER BY created_at DESC').all(u.id);
+  json(res, 200, { user: u, builds: buildsOut, vinyls, guides });
+});
+
+route('PATCH', '/api/users/me/avatar', async (req, res) => {
+  const user = getUser(req);
+  if (!requireAuth(user, res)) return;
+  const { avatar } = await parseBody(req);
+  if (!avatar) return json(res, 400, { error: 'No avatar data' });
+  if (avatar.length > 500000) return json(res, 400, { error: 'Image too large (max ~375KB)' });
+  db.prepare('UPDATE users SET avatar=? WHERE id=?').run(avatar, user.id);
+  json(res, 200, { ok: true });
+});
+
+
 // ─── CARS ─────────────────────────────────────────────────────
 route('GET', '/api/cars', async (req, res) => {
   const cars = db.prepare('SELECT * FROM cars ORDER BY name').all();
