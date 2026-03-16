@@ -3264,6 +3264,27 @@ nav {
   padding: 1.2rem 2rem;
   border-bottom: 1px solid rgba(255,255,255,.05);
 }
+.bv-balance-section { padding-bottom: 1rem; }
+.bv-balance-wrap { display:flex;flex-direction:column;align-items:center;gap:.6rem; }
+.bv-triangle-svg { width:200px;height:auto;display:block; }
+.bv-balance-tag {
+  font-family:'Barlow Condensed',sans-serif;font-size:.72rem;
+  letter-spacing:.22em;text-transform:uppercase;
+  color:var(--ac);padding:.25rem .7rem;
+  border:1px solid rgba(155,191,95,.2);background:rgba(155,191,95,.05);
+}
+.bv-delete-btn {
+  display:inline-flex;align-items:center;gap:.35rem;
+  background:rgba(196,124,124,.08);border:1px solid rgba(196,124,124,.2);
+  color:rgba(196,124,124,.7);font-family:'Barlow Condensed',sans-serif;
+  font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;
+  padding:.28rem .65rem;cursor:pointer;transition:all .15s;
+}
+.bv-delete-btn:hover{background:rgba(196,124,124,.18);border-color:rgba(196,124,124,.5);color:var(--red);}
+
+/* ── No text selection ─────────────────────────────────────────── */
+* { -webkit-user-select: none; -moz-user-select: none; user-select: none; }
+input, textarea, [contenteditable] { -webkit-user-select: text; -moz-user-select: text; user-select: text; }
 .bv-section:last-child { border-bottom: none; }
 .bv-section-label {
   font-family: 'Barlow Condensed', sans-serif;
@@ -5372,19 +5393,29 @@ function openBuildView(cid, idx, key) {
     if(orig) orig.value = this.value;
   };
 
-  // Footer actions
-  var footerHtml = '';
-  footerHtml += '<button class="vb lk'+(uv==='like'?' on':'')+'" id="bm_lk_'+key+'" onclick="vote(\''+cid+'\','+idx+',\'like\');setTimeout(function(){refreshBmVotes(\''+key+'\',\''+cid+'\','+idx+')},300)">'+IC.lk+'<span id="bmlk_'+key+'">'+likes+'</span></button>';
-  footerHtml += '<button class="vb ds'+(uv==='dislike'?' on':'')+'" id="bm_ds_'+key+'" onclick="vote(\''+cid+'\','+idx+',\'dislike\');setTimeout(function(){refreshBmVotes(\''+key+'\',\''+cid+'\','+idx+')},300)">'+IC.ds+'<span id="bmdk_'+key+'">'+dislikes+'</span></button>';
-  if(isPro && isOwner){
-    footerHtml += '<button class="btn-recommend'+(isRec?' active':'')+'" onclick="toggleRecommend(\''+realId+'\',\''+key+'\')"><svg viewBox="0 0 24 24"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>'+(isRec?'Remove rec.':'Recommend')+'</button>';
-  }
-  footerHtml += '<button class="vb report" onclick="openReportModal(\'build\',\''+realId+'\')">⚠️ Report</button>';
-  document.getElementById('bmFooter').innerHTML = footerHtml;
+  // Build balance triangle
+  var Sx=130,Sy=10,Ax=242,Ay=200,Hx=18,Hy=200,Cx=130,Cy=105;
+  var ts=Math.min(s,100),ta=Math.min(a,100),th=Math.min(hh,100),tTotal=ts+ta+th;
+  var bmSp=document.getElementById('bmSpeedPct'),bmAc=document.getElementById('bmAccelPct'),bmHn=document.getElementById('bmHandlPct');
+  if(bmSp)bmSp.textContent=ts+'%'; if(bmAc)bmAc.textContent=ta+'%'; if(bmHn)bmHn.textContent=th+'%';
+  var bmFill=document.getElementById('bmTriFill'),bmNode=document.getElementById('bmTriNode');
+  if(tTotal>0&&bmFill){var wS=ts/100,wA=ta/100,wH=th/100,wT=wS+wA+wH,blend=Math.min(wT/1.5,1);var dirX=(wS*Sx+wA*Ax+wH*Hx)/wT,dirY=(wS*Sy+wA*Ay+wH*Hy)/wT;bmFill.setAttribute('points',(Cx+(Sx-Cx)*wS)+','+(Cy+(Sy-Cy)*wS)+' '+(Cx+(Ax-Cx)*wA)+','+(Cy+(Ay-Cy)*wA)+' '+(Cx+(Hx-Cx)*wH)+','+(Cy+(Hy-Cy)*wH));if(bmNode){var px=Cx+(dirX-Cx)*blend,py=Cy+(dirY-Cy)*blend;bmNode.setAttribute('cx',px);bmNode.setAttribute('cy',py);}}
+  else if(bmFill)bmFill.setAttribute('points',Cx+','+Cy+' '+Cx+','+Cy+' '+Cx+','+Cy);
+  var diff=tTotal>0?Math.max(Math.abs(ts-ta),Math.abs(ta-th),Math.abs(ts-th)):0;
+  var profTag=tTotal===0?'— no parts —':diff<15?'BALANCED':ts>=ta&&ts>=th?'SPEED BUILD':ta>=ts&&ta>=th?'ACCEL BUILD':'HANDLING BUILD';
+  var bmTag=document.getElementById('bmBalanceTag');if(bmTag)bmTag.textContent=profTag;
 
-  // Open
+  // Footer actions
+  var footerHtml='';
+  footerHtml+='<button class="vb lk'+(uv==='like'?' on':'')+'" id="bm_lk_'+key+'" onclick="vote(\''+cid+'\','+idx+',\'like\');setTimeout(function(){refreshBmVotes(\''+key+'\',\''+cid+'\','+idx+')},300)">'+IC.lk+'<span id="bmlk_'+key+'">'+likes+'</span></button>';
+  footerHtml+='<button class="vb ds'+(uv==='dislike'?' on':'')+'" id="bm_ds_'+key+'" onclick="vote(\''+cid+'\','+idx+',\'dislike\');setTimeout(function(){refreshBmVotes(\''+key+'\',\''+cid+'\','+idx+')},300)">'+IC.ds+'<span id="bmdk_'+key+'">'+dislikes+'</span></button>';
+  if(isPro&&isOwner){footerHtml+='<button class="btn-recommend'+(isRec?' active':'')+'" onclick="toggleRecommend(\''+realId+'\',\''+key+'\')"><svg viewBox="0 0 24 24"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>'+(isRec?'Remove rec.':'Recommend')+'</button>';}
+  footerHtml+='<button class="vb report" style="margin-left:auto" onclick="openReportModal(\'build\',\''+realId+'\')"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg> Report</button>';
+  if(isOwner){footerHtml+='<button class="bv-delete-btn" onclick="deleteBuildFromView(\''+realId+'\',\''+cid+'\',\''+key+'\')"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> Delete</button>';}
+  document.getElementById('bmFooter').innerHTML=footerHtml;
+
   document.getElementById('buildViewModal').classList.add('open');
-  document.body.style.overflow = 'hidden';
+  document.body.style.overflow='hidden';
 }
 
 function refreshBmVotes(key, cid, idx) {
@@ -5402,6 +5433,19 @@ function refreshBmVotes(key, cid, idx) {
   var dsBtn = document.getElementById('bm_ds_'+key);
   if(lkBtn) lkBtn.classList.toggle('on', uv==='like');
   if(dsBtn) dsBtn.classList.toggle('on', uv==='dislike');
+}
+
+async function deleteBuildFromView(buildId, cid, key) {
+  if (!confirm('Delete this build? This cannot be undone.')) return;
+  var r = await apiFetch('/builds/' + buildId, { method: 'DELETE' });
+  if (!r.ok) { toast('Error: ' + ((r.data && r.data.error) || 'server error'), true); return; }
+  // Remove from local DB
+  if (DB.builds[cid]) {
+    DB.builds[cid] = DB.builds[cid].filter(function(b){ return (b._id || '') !== buildId; });
+  }
+  closeBuildViewDirect();
+  rBuilds(cid);
+  toast('Build deleted');
 }
 
 function closeBuildView(e) {
@@ -6867,6 +6911,41 @@ document.addEventListener('DOMContentLoaded', function(){ setTimeout(applyI18n, 
 
     <!-- stat bars -->
     <div class="bv-bars" id="bmBars"></div>
+
+    <!-- build balance triangle -->
+    <div class="bv-section bv-balance-section">
+      <div class="bv-section-label">BUILD BALANCE</div>
+      <div class="bv-balance-wrap">
+        <svg class="bv-triangle-svg" viewBox="-10 -20 280 270" id="bmTriangle">
+          <defs>
+            <radialGradient id="bmTriGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="rgba(155,191,95,.15)"/>
+              <stop offset="100%" stop-color="rgba(155,191,95,0)"/>
+            </radialGradient>
+          </defs>
+          <ellipse cx="130" cy="130" rx="110" ry="100" fill="url(#bmTriGlow)" opacity=".5"/>
+          <polygon class="tri-ring" points="130,10 242,200 18,200"/>
+          <polygon class="tri-ring" points="130,47.5 204.5,162.5 55.5,162.5"/>
+          <polygon class="tri-ring" points="130,85 167,125 93,125"/>
+          <polygon class="tri-ring" points="130,122.5 148,143.75 112,143.75"/>
+          <line class="tri-spoke" x1="130" y1="105" x2="130" y2="10"/>
+          <line class="tri-spoke" x1="130" y1="105" x2="242" y2="200"/>
+          <line class="tri-spoke" x1="130" y1="105" x2="18" y2="200"/>
+          <polygon id="bmTriFill" class="tri-area" points="130,105 130,105 130,105"/>
+          <circle cx="130" cy="10"  r="3" fill="rgba(124,174,192,.3)" stroke="#7caec0" stroke-width="1"/>
+          <circle cx="242" cy="200" r="3" fill="rgba(124,174,124,.3)" stroke="#7cae7c" stroke-width="1"/>
+          <circle cx="18"  cy="200" r="3" fill="rgba(212,181,124,.3)" stroke="#d4b57c" stroke-width="1"/>
+          <circle id="bmTriNode" class="tri-node" cx="130" cy="105" r="5"/>
+          <text x="130" y="-4"  text-anchor="middle" class="tri-lbl-main" fill="#7caec0">MAX SPEED</text>
+          <text id="bmSpeedPct" x="130" y="-14" text-anchor="middle" class="tri-lbl-pct spd">0%</text>
+          <text x="256" y="210" text-anchor="middle" class="tri-lbl-main" fill="#7cae7c">ACCEL</text>
+          <text id="bmAccelPct" x="256" y="220" text-anchor="middle" class="tri-lbl-pct acc">0%</text>
+          <text x="4"   y="210" text-anchor="middle" class="tri-lbl-main" fill="#d4b57c">HANDLING</text>
+          <text id="bmHandlPct" x="4"   y="220" text-anchor="middle" class="tri-lbl-pct hdl">0%</text>
+        </svg>
+        <div class="bv-balance-tag" id="bmBalanceTag"></div>
+      </div>
+    </div>
 
     <!-- parts -->
     <div class="bv-section" id="bmPartsSection">
