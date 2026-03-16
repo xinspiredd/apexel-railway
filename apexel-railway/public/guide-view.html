@@ -219,6 +219,7 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 }
 .gv-cmt-form {
   display: flex; gap: .6rem; margin-top: 1.2rem;
+  align-items: stretch;
 }
 .gv-cmt-input {
   flex: 1;
@@ -229,13 +230,15 @@ input, textarea { -webkit-user-select: text; user-select: text; }
   font-family: 'Barlow', sans-serif; font-size: .9rem;
   outline: none; resize: none;
   transition: border-color .15s;
+  min-height: 48px;
+  line-height: 1.5;
 }
 .gv-cmt-input:focus { border-color: rgba(155,191,95,.3); }
 .gv-cmt-input::placeholder { color: rgba(255,255,255,.15); }
 .gv-cmt-btn {
   background: var(--ac); border: none; cursor: pointer;
-  width: 40px; height: 40px; flex-shrink: 0;
-  align-self: flex-end;
+  width: 48px; flex-shrink: 0;
+  align-self: stretch;
   display: flex; align-items: center; justify-content: center;
   transition: background .15s;
 }
