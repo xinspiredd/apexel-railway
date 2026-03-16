@@ -534,12 +534,19 @@ nav{position:fixed;top:0;left:0;right:0;z-index:9000;height:70px;display:flex;al
 
 /* BUILDS LIST */
 .bl{display:flex;flex-direction:column;gap:2px;background:rgba(255,255,255,.02);margin-bottom:2rem}
-.bi{background:var(--s2);padding:1.4rem 1.5rem;transition:var(--transition-base);border-left:2px solid transparent}
-.bi:hover{background:#1e1e28;transform:translateX(4px);border-left-color:rgba(155,191,95,.25)}
-.bih{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.8rem;gap:.8rem}
-.btn{font-family:'Barlow Condensed',sans-serif;font-size:1.35rem;letter-spacing:.06em}
-.bau{font-size:0.85rem;color:var(--mu);margin-top:.2rem;letter-spacing:.04em}
-.chips{display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:1rem}
+.bi{background:var(--s2);transition:background .18s,border-color .18s;border-left:2px solid transparent;border-bottom:1px solid rgba(255,255,255,.04);cursor:none}
+.bi:hover{background:#1c1c25;border-left-color:rgba(155,191,95,.35)}
+.bi.expanded{border-left-color:var(--ac);background:#1a1a23}
+.bih{display:flex;align-items:center;gap:.8rem;padding:1rem 1.2rem;user-select:none;cursor:none}
+.bih-left{flex:1;min-width:0;display:flex;align-items:center;gap:.9rem}
+.btn{font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bau{font-size:0.78rem;color:var(--mu);letter-spacing:.04em;white-space:nowrap;flex-shrink:0}
+.bih-stats{display:flex;gap:.5rem;flex-shrink:0}
+.bi-chevron{width:16px;height:16px;stroke:var(--mu);fill:none;stroke-width:2;flex-shrink:0;transition:transform .22s ease}
+.bi.expanded .bi-chevron{transform:rotate(180deg);stroke:var(--ac)}
+.bi-body{display:none;padding:0 1.2rem 1.1rem;animation:fadeIn .2s ease}
+.bi.expanded .bi-body{display:block}
+.chips{display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:.9rem}
 .chip2{display:inline-flex;align-items:center;gap:0.5rem;background:var(--s1);border:1px solid var(--br);padding:0.3rem 0.8rem;font-family:'Barlow Condensed',sans-serif;font-size:0.85rem;letter-spacing:.06em;cursor:default;position:relative;transition:var(--transition-base)}
 .chip2:hover{border-color:rgba(155,191,95,.28);transform:translateY(-1px)}
 .c2l{color:rgba(255,255,255,.3);font-size:0.7rem;letter-spacing:.18em;text-transform:uppercase}
@@ -5074,6 +5081,19 @@ function rBuilds(cid){
     _rBuildsRender(cid);
   });
 }
+
+function toggleBuild(el, key) {
+  var wasExpanded = el.classList.contains('expanded');
+  // Close all others in same list
+  var list = el.parentNode;
+  if (list) {
+    list.querySelectorAll('.bi.expanded').forEach(function(other) {
+      if (other !== el) other.classList.remove('expanded');
+    });
+  }
+  el.classList.toggle('expanded', !wasExpanded);
+}
+
 function _rBuildsRender(cid){
   var bl=document.getElementById('blist');if(!bl)return;
   var arr=DB.builds[cid]||[];
@@ -5113,7 +5133,7 @@ function _rBuildsRender(cid){
     var key = b.key;
     var build = b.build;
     var likes = b.likes, dislikes = b.dislikes, uv = b.uv;
-    var realId = build._id || key; // real DB id for reports/delete
+    var realId = build._id || key;
     var cmts=DB.comments[key]||[];
     var slots=build.slots||{};
     var s=0,a=0,hh=0;
@@ -5133,40 +5153,51 @@ function _rBuildsRender(cid){
     var isOwner = _authUser && (_authUser.username === build.author);
     var isPro = _authUser && (_authUser.role === 'pro');
     var proBadge = isProBuild ? '<span class="pro-badge"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg>PRO</span>' : '';
+    var likesBadge = likes > 0 ? '<span style="font-family:Barlow Condensed,sans-serif;font-size:.7rem;color:var(--mu);letter-spacing:.05em;flex-shrink:0">♥ '+likes+'</span>' : '';
 
-    h+='<div class="bi'+(isRec?' recommended':'')+'" id="bi_'+key+'" data-realid="'+realId+'">';
+    // ── CARD: compact row, expand on click ──
+    h+='<div class="bi'+(isRec?' recommended':'')+'" id="bi_'+key+'" data-realid="'+realId+'" onclick="toggleBuild(this,''+key+'')">';
+
     if(isProBuild){
-      h+='<div class="bi-pro-banner"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg>Сборка от Pro&#8209;водителя</div>';
+      h+='<div class="bi-pro-banner"><svg viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg>Pro‑driver build</div>';
     }
     if(isRec && build.recommended_by){
-      h+='<div class="bi-rec-ribbon"><svg viewBox="0 0 24 24"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>Рекомендует <span class="rec-who">'+esc(build.recommended_by)+'</span></div>';
+      h+='<div class="bi-rec-ribbon"><svg viewBox="0 0 24 24"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>Recommended by <span class="rec-who">'+esc(build.recommended_by)+'</span></div>';
     }
-    h+='<div class="bih"><div><div class="btn">'+esc(build.name)+'</div><div class="bau bau-pro">by '+esc(build.author||'Anonymous')+proBadge+'</div></div>';
-    h+='<div style="display:flex;gap:.8rem">'+ist('spd',s)+ist('acc',a)+ist('hdl',hh)+'</div></div>';
-    if(chips)h+='<div class="chips">'+chips+'</div>';
-    if(build.desc)h+='<div class="bdesc">'+esc(build.desc)+'</div>';
+
+    // ── compact header row ──
+    h+='<div class="bih">';
+    h+='<div class="bih-left"><div class="btn">'+esc(build.name)+'</div><div class="bau bau-pro">by '+esc(build.author||'Anonymous')+proBadge+'</div></div>';
+    h+='<div class="bih-stats">'+ist('spd',s)+ist('acc',a)+ist('hdl',hh)+'</div>';
+    if(likesBadge) h+=likesBadge;
+    h+='<svg class="bi-chevron" viewBox="0 0 24 24"><polyline points="6,9 12,15 18,9"/></svg>';
+    h+='</div>';
+
+    // ── expandable detail body ──
+    h+='<div class="bi-body" onclick="event.stopPropagation()">';
+    if(chips) h+='<div class="chips">'+chips+'</div>';
+    if(build.desc) h+='<div class="bdesc">'+esc(build.desc)+'</div>';
     h+='<div class="bact">';
-    h+='<button class="vb lk'+(uv==='like'?' on':'')+'" onclick="vote(\''+cid+'\','+i+',\'like\')">'+IC.lk+'<span id="lk_'+key+'">'+likes+'</span></button>';
-    h+='<button class="vb ds'+(uv==='dislike'?' on':'')+'" onclick="vote(\''+cid+'\','+i+',\'dislike\')">'+IC.ds+'<span id="dk_'+key+'">'+dislikes+'</span></button>';
+    h+='<button class="vb lk'+(uv==='like'?' on':'')+'" onclick="event.stopPropagation();vote(''+cid+'','+i+','like')">'+IC.lk+'<span id="lk_'+key+'">'+likes+'</span></button>';
+    h+='<button class="vb ds'+(uv==='dislike'?' on':'')+'" onclick="event.stopPropagation();vote(''+cid+'','+i+','dislike')">'+IC.ds+'<span id="dk_'+key+'">'+dislikes+'</span></button>';
     if(isPro && isOwner){
-      h+='<button class="btn-recommend'+(isRec?' active':'')+'" id="recbtn_'+key+'" onclick="toggleRecommend(\''+realId+'\',\''+key+'\')"><svg viewBox="0 0 24 24"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>'+(isRec?'Снять рекоменд.':'Рекомендовать')+'</button>';
+      h+='<button class="btn-recommend'+(isRec?' active':'')+'" id="recbtn_'+key+'" onclick="event.stopPropagation();toggleRecommend(''+realId+'',''+key+'')"><svg viewBox="0 0 24 24"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>'+(isRec?'Remove rec.':'Recommend')+'</button>';
     }
-    h+='<button class="vb report" onclick="openReportModal(\'build\',\''+realId+'\')">⚠️</button>';
-    h+='<button class="tcb" onclick="tCmt(\''+key+'\',\''+cid+'\','+i+')">Comments ('+cmts.length+')</button>';
+    h+='<button class="vb report" onclick="event.stopPropagation();openReportModal('build',''+realId+'')">⚠️</button>';
+    h+='<button class="tcb" onclick="event.stopPropagation();tCmt(''+key+'',''+cid+'','+i+')">Comments ('+cmts.length+')</button>';
     h+='</div>';
     h+='<div class="cmts" id="cm_'+key+'">';
     h+='<div id="cml_'+key+'">';
     cmts.forEach(function(c, cmtIdx){
       var cmtKey = key+'_cmt_'+cmtIdx;
-      h+='<div class="cmt" id="'+cmtKey+'">' +
-         '<div class="cma">' + esc(c.author) +
-         '<button class="cmt-report" onclick="openReportModal(\'comment\',\''+cmtKey+'\')">⚠️</button>' +
-         '</div>' +
-         '<div class="cmtx">' + esc(c.text) + '</div>' +
-         '</div>';
+      h+='<div class="cmt" id="'+cmtKey+'">'+
+         '<div class="cma">'+esc(c.author)+
+         '<button class="cmt-report" onclick="event.stopPropagation();openReportModal('comment',''+cmtKey+'')">⚠️</button>'+
+         '</div><div class="cmtx">'+esc(c.text)+'</div></div>';
     });
     h+='</div>';
-    h+='<div class="cmf"><textarea class="cmi" id="cmi_'+key+'" rows="2" placeholder="Add a comment..."></textarea><button class="cms" onclick="addCmt(\''+cid+'\','+i+',\''+key+'\')" title="Post"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg></button></div>';
+    h+='<div class="cmf"><textarea class="cmi" id="cmi_'+key+'" rows="2" placeholder="Add a comment..."></textarea><button class="cms" onclick="event.stopPropagation();addCmt(''+cid+'','+i+',''+key+'')" title="Post"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg></button></div>';
+    h+='</div>';
     h+='</div></div>';
   });
   bl.innerHTML=h;
