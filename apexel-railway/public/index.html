@@ -596,8 +596,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:9000;height:70px;display:flex;al
 .cmf{margin-top:1rem;display:flex;gap:0.5rem}
 .cmi{flex:1;background:var(--s1);border:1px solid var(--br);color:var(--tx);padding:0.7rem 0.9rem;font-family:'Barlow',sans-serif;font-size:0.95rem;outline:none;resize:none;transition:var(--transition-base)}
 .cmi:focus{border-color:var(--ac);box-shadow:0 0 0 3px rgba(155,191,95,.1)}
-.cms{background:var(--ac);border:none;color:var(--bg);padding:0.7rem 1.2rem;font-family:'Barlow Condensed',sans-serif;font-size:0.85rem;letter-spacing:.15em;text-transform:uppercase;cursor:none;align-self:flex-end;transition:var(--transition-base);border-radius:4px}
+.cms{background:var(--ac);border:none;color:var(--bg);padding:0.6rem 0.9rem;font-family:'Barlow Condensed',sans-serif;font-size:0.85rem;letter-spacing:.15em;text-transform:uppercase;cursor:none;align-self:flex-end;transition:var(--transition-base);border-radius:4px;display:flex;align-items:center;justify-content:center;width:38px;height:38px;flex-shrink:0}
 .cms:hover{opacity:.85;transform:translateY(-1px)}
+.cms svg{width:15px;height:15px;stroke:var(--bg);fill:none;stroke-width:2.2}
 .empty{padding:3rem 2rem;text-align:center;color:var(--mu);font-family:'Barlow Condensed',sans-serif;font-size:1rem;letter-spacing:.2em;text-transform:uppercase}
 
 /* REPORT MODAL */
@@ -5165,7 +5166,7 @@ function _rBuildsRender(cid){
          '</div>';
     });
     h+='</div>';
-    h+='<div class="cmf"><textarea class="cmi" id="cmi_'+key+'" rows="2" placeholder="Add a comment..."></textarea><button class="cms" onclick="addCmt(\''+cid+'\','+i+',\''+key+'\')">Post</button></div>';
+    h+='<div class="cmf"><textarea class="cmi" id="cmi_'+key+'" rows="2" placeholder="Add a comment..."></textarea><button class="cms" onclick="addCmt(\''+cid+'\','+i+',\''+key+'\')" title="Post"><svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg></button></div>';
     h+='</div></div>';
   });
   bl.innerHTML=h;
