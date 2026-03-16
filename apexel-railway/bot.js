@@ -63,17 +63,17 @@ function tgPostHttp(method, body) {
     const data = JSON.stringify(body);
     const opts = {
       hostname: 'api.telegram.org',
-      port: 80,
+      port: 443,
       path: `/bot${BOT_TOKEN}/${method}`,
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) },
     };
-    const req = http.request(opts, res => {
+    const req = require('https').request(opts, res => {
       let buf = '';
       res.on('data', c => buf += c);
       res.on('end', () => { try { resolve(JSON.parse(buf)); } catch { resolve({ ok: false }); } });
     });
-    req.on('error', e => { console.error(`[bot] http fallback error (${method}):`, e.message); resolve({ ok: false, error: e.message }); });
+    req.on('error', e => { console.error(`[bot] https error (${method}):`, e.message); resolve({ ok: false, error: e.message }); });
     req.write(data); req.end();
   });
 }
@@ -328,20 +328,35 @@ const botServer = http.createServer((req, res) => {
 // ─── TELEGRAM LONG POLLING ────────────────────────────────────────
 let offset = 0;
 
+let _polling = false;
+
 async function poll() {
+  if (_polling) return;
+  _polling = true;
   try {
-    const upd = await tgPost('getUpdates', { offset, timeout: 30, allowed_updates: ['message'] });
-    if (upd.result && upd.result.length > 0) {
+    const upd = await tgPost('getUpdates', { offset, timeout: 25, allowed_updates: ['message'] });
+    if (upd.ok && upd.result && upd.result.length > 0) {
       for (const u of upd.result) {
+        // Always advance offset first so failed handlers don't replay
         offset = u.update_id + 1;
-        handleUpdate(u).catch(e => console.error('[bot] handler error:', e.message));
+        try {
+          await handleUpdate(u);
+        } catch(e) {
+          console.error('[bot] handler error:', e.message);
+        }
       }
+    } else if (!upd.ok) {
+      // Telegram returned error — back off
+      console.warn('[bot] getUpdates error:', upd.description || JSON.stringify(upd));
+      await new Promise(r => setTimeout(r, 5000));
     }
   } catch (e) {
     console.error('[bot] poll error:', e.message);
     await new Promise(r => setTimeout(r, 5000));
+  } finally {
+    _polling = false;
+    setTimeout(poll, 300); // small delay between polls
   }
-  setImmediate(poll);
 }
 
 // ─── STARTUP ─────────────────────────────────────────────────────
@@ -358,9 +373,9 @@ botServer.listen(API_PORT, '127.0.0.1', () => {
   console.log(`[bot] Internal API listening on 127.0.0.1:${API_PORT}`);
 });
 
-// Delete webhook to use long polling
-tgPost('deleteWebhook', {}).then(() => {
-  console.log(`[bot] Starting long polling...`);
+// Delete webhook + drop pending updates before polling
+tgPost('deleteWebhook', { drop_pending_updates: true }).then(() => {
+  console.log(`[bot] Webhook deleted, pending updates dropped. Starting long polling...`);
   poll();
   tgPost('getMe', {}).then(r => {
     if (r.result) {
