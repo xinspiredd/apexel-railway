@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEXEL · Profile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700&family=Barlow:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080808;--bg2:#0f0f12;--tx:#e8e8ec;
+  --mu:rgba(255,255,255,.32);--br:rgba(255,255,255,.07);
+  --ac:#9bbf5f;--ac2:#7da348;--red:#c47c7c;
+  --s1:#141418;--s2:#1a1a20;--gold:#c9b037;
+}
+html,body{background:var(--bg);color:var(--tx);min-height:100vh;font-family:'Barlow',sans-serif;font-size:15px;line-height:1.6;user-select:none}
+input,textarea{user-select:text}
+button,a{cursor:pointer}
+
+/* ── HEADER ─── */
+.pf-header{position:fixed;top:0;left:0;right:0;height:52px;background:rgba(8,8,8,.92);border-bottom:1px solid var(--br);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:space-between;padding:0 28px;z-index:100}
+.pf-logo{font-family:'Barlow Condensed',sans-serif;font-size:1.05rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;text-decoration:none;color:var(--tx);opacity:.4;transition:opacity .2s}
+.pf-logo:hover{opacity:1}
+.pf-logo span{color:var(--ac)}
+.pf-back{display:inline-flex;align-items:center;gap:.5rem;font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--mu);text-decoration:none;background:none;border:1px solid var(--br);padding:.32rem .85rem;transition:all .15s}
+.pf-back:hover{color:var(--tx);border-color:rgba(255,255,255,.2)}
+.pf-back svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2}
+
+/* ── LOADER ─── */
+.pf-loader{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--mu)}
+.pf-spinner{width:24px;height:24px;border:2px solid var(--br);border-top-color:var(--ac);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── MAIN ─── */
+.pf-wrap{max-width:900px;margin:0 auto;padding:72px 24px 80px;display:none}
+.pf-wrap.show{display:block;animation:fadeUp .3s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* ── PROFILE HERO ─── */
+.pf-hero{display:flex;align-items:flex-start;gap:2rem;padding:2rem 0 2rem;border-bottom:1px solid var(--br);margin-bottom:2rem;flex-wrap:wrap}
+
+/* Avatar */
+.pf-avatar-wrap{position:relative;flex-shrink:0}
+.pf-avatar{width:88px;height:88px;border-radius:50%;background:rgba(155,191,95,.1);border:2px solid rgba(155,191,95,.2);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:700;color:var(--ac);overflow:hidden;transition:border-color .2s}
+.pf-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.pf-avatar-edit{position:absolute;bottom:0;right:0;width:26px;height:26px;border-radius:50%;background:var(--ac);border:2px solid var(--bg);display:none;align-items:center;justify-content:center;cursor:pointer;transition:background .15s}
+.pf-avatar-edit:hover{background:var(--ac2)}
+.pf-avatar-edit svg{width:11px;height:11px;stroke:#080808;fill:none;stroke-width:2.5}
+.pf-avatar-wrap:hover .pf-avatar-edit{display:flex}
+.pf-avatar-input{display:none}
+
+/* Info */
+.pf-info{flex:1;min-width:0}
+.pf-username{font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:700;letter-spacing:.06em;line-height:1;margin-bottom:.4rem}
+.pf-role-badge{display:inline-block;font-family:'Barlow Condensed',sans-serif;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;padding:.2rem .55rem;border-radius:2px;margin-bottom:.6rem}
+.pf-role-badge.user{background:rgba(255,255,255,.06);color:var(--mu);border:1px solid var(--br)}
+.pf-role-badge.pro{background:rgba(155,191,95,.1);color:var(--ac);border:1px solid rgba(155,191,95,.25)}
+.pf-role-badge.admin{background:rgba(201,176,55,.1);color:var(--gold);border:1px solid rgba(201,176,55,.3)}
+.pf-joined{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mu)}
+
+/* Stats row */
+.pf-stats{display:flex;gap:1.8rem;margin-top:1rem;flex-wrap:wrap}
+.pf-stat{display:flex;flex-direction:column;gap:.15rem}
+.pf-stat-val{font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:700;color:var(--tx);line-height:1}
+.pf-stat-lbl{font-family:'Barlow Condensed',sans-serif;font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--mu)}
+
+/* ── TABS ─── */
+.pf-tabs{display:flex;gap:0;border-bottom:1px solid var(--br);margin-bottom:1.5rem}
+.pf-tab{font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;color:var(--mu);background:none;border:none;padding:.65rem 1.2rem;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s;display:flex;align-items:center;gap:.45rem}
+.pf-tab:hover{color:var(--tx)}
+.pf-tab.active{color:var(--ac);border-bottom-color:var(--ac)}
+.pf-tab .pf-tab-cnt{font-size:.65rem;background:rgba(255,255,255,.08);border-radius:10px;padding:.05rem .4rem;color:var(--mu)}
+.pf-tab.active .pf-tab-cnt{background:rgba(155,191,95,.15);color:var(--ac)}
+
+/* ── TAB PANELS ─── */
+.pf-panel{display:none}
+.pf-panel.active{display:block;animation:fadeUp .2s ease}
+.pf-empty{font-family:'Barlow Condensed',sans-serif;font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.12);padding:2rem 0;text-align:center}
+
+/* ── BUILD ROWS ─── */
+.pf-build-row{display:flex;align-items:center;gap:.8rem;padding:.85rem 1rem;background:var(--s1);border:1px solid var(--br);margin-bottom:4px;cursor:pointer;transition:background .15s,border-color .15s}
+.pf-build-row:hover{background:var(--s2);border-color:rgba(155,191,95,.2)}
+.pf-build-name{font-family:'Barlow Condensed',sans-serif;font-size:1rem;letter-spacing:.05em;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pf-build-car{font-family:'Barlow Condensed',sans-serif;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mu);white-space:nowrap}
+.pf-build-stats{display:flex;gap:.4rem;flex-shrink:0}
+.pf-cls-badge{font-family:'Barlow Condensed',sans-serif;font-size:.6rem;letter-spacing:.14em;padding:.15rem .4rem;border:1px solid rgba(255,255,255,.12);color:var(--mu);flex-shrink:0}
+.pf-likes{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;color:var(--mu);display:flex;align-items:center;gap:.25rem;flex-shrink:0}
+.pf-likes svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2}
+
+/* ── VINYL ROWS ─── */
+.pf-vinyl-row{display:flex;align-items:center;gap:.8rem;padding:.85rem 1rem;background:var(--s1);border:1px solid var(--br);margin-bottom:4px}
+.pf-vinyl-thumb{width:48px;height:36px;background:var(--s2);border:1px solid var(--br);flex-shrink:0;object-fit:cover}
+.pf-vinyl-name{font-family:'Barlow Condensed',sans-serif;font-size:1rem;letter-spacing:.05em;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pf-vinyl-car{font-family:'Barlow Condensed',sans-serif;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mu)}
+
+/* ── GUIDE ROWS ─── */
+.pf-guide-row{display:flex;align-items:center;gap:.8rem;padding:.85rem 1rem;background:var(--s1);border:1px solid var(--br);margin-bottom:4px;cursor:pointer;transition:background .15s,border-color .15s;text-decoration:none;color:inherit}
+.pf-guide-row:hover{background:var(--s2);border-color:rgba(155,191,95,.2)}
+.pf-guide-icon{width:32px;height:32px;border:1px solid var(--br);background:var(--s2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pf-guide-icon svg{width:14px;height:14px;stroke:var(--mu);fill:none;stroke-width:1.5}
+.pf-guide-title{font-family:'Barlow Condensed',sans-serif;font-size:1rem;letter-spacing:.05em;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pf-guide-meta{font-family:'Barlow Condensed',sans-serif;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mu);display:flex;align-items:center;gap:.35rem;flex-shrink:0}
+.pf-guide-meta svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2}
+
+/* ── IS-STAT mini bars ─── */
+.is{display:inline-flex;align-items:center;gap:.2rem;font-family:'Barlow Condensed',sans-serif;font-size:.7rem;background:rgba(0,0,0,.3);padding:.1rem .35rem;border-radius:2px;white-space:nowrap}
+.is.spd{color:#7caec0}.is.acc{color:#7cae7c}.is.hdl{color:#d4b57c}
+.is svg{width:9px;height:9px;stroke:currentColor;fill:none}
+
+/* ── TOAST ─── */
+.pf-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ac);color:#080808;font-family:'Barlow Condensed',sans-serif;font-size:.75rem;letter-spacing:.18em;text-transform:uppercase;padding:.55rem 1.3rem;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;z-index:999}
+.pf-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<header class="pf-header">
+  <a href="index.html" class="pf-logo">APEX<span>EL</span></a>
+  <a href="javascript:history.back()" class="pf-back">
+    <svg viewBox="0 0 24 24"><polyline points="15,18 9,12 15,6"/></svg>Back
+  </a>
+</header>
+
+<div class="pf-loader" id="pfLoader">
+  <div class="pf-spinner"></div>Loading profile…
+</div>
+
+<div class="pf-wrap" id="pfWrap">
+
+  <!-- Hero -->
+  <div class="pf-hero">
+    <div class="pf-avatar-wrap">
+      <div class="pf-avatar" id="pfAvatar"></div>
+      <div class="pf-avatar-edit" id="pfAvatarEdit" onclick="document.getElementById('pfAvatarInput').click()" title="Change avatar">
+        <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </div>
+      <input type="file" id="pfAvatarInput" class="pf-avatar-input" accept="image/*" onchange="uploadAvatar(event)">
+    </div>
+
+    <div class="pf-info">
+      <div class="pf-username" id="pfUsername"></div>
+      <div class="pf-role-badge" id="pfRoleBadge"></div>
+      <div class="pf-joined" id="pfJoined"></div>
+      <div class="pf-stats">
+        <div class="pf-stat"><div class="pf-stat-val" id="pfStatBuilds">0</div><div class="pf-stat-lbl">Builds</div></div>
+        <div class="pf-stat"><div class="pf-stat-val" id="pfStatVinyls">0</div><div class="pf-stat-lbl">Vinyls</div></div>
+        <div class="pf-stat"><div class="pf-stat-val" id="pfStatGuides">0</div><div class="pf-stat-lbl">Guides</div></div>
+        <div class="pf-stat"><div class="pf-stat-val" id="pfStatLikes">0</div><div class="pf-stat-lbl">Total likes</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="pf-tabs">
+    <button class="pf-tab active" onclick="switchTab('builds',this)">
+      <svg style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      Builds <span class="pf-tab-cnt" id="tabCntBuilds">0</span>
+    </button>
+    <button class="pf-tab" onclick="switchTab('vinyls',this)">
+      <svg style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+      Vinyls <span class="pf-tab-cnt" id="tabCntVinyls">0</span>
+    </button>
+    <button class="pf-tab" onclick="switchTab('guides',this)">
+      <svg style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+      Guides <span class="pf-tab-cnt" id="tabCntGuides">0</span>
+    </button>
+  </div>
+
+  <!-- Panels -->
+  <div class="pf-panel active" id="panel-builds">
+    <div class="pf-empty" id="emptyBuilds">No builds yet</div>
+    <div id="buildsList"></div>
+  </div>
+  <div class="pf-panel" id="panel-vinyls">
+    <div class="pf-empty" id="emptyVinyls">No vinyls yet</div>
+    <div id="vinylsList"></div>
+  </div>
+  <div class="pf-panel" id="panel-guides">
+    <div class="pf-empty" id="emptyGuides">No guides yet</div>
+    <div id="guidesList"></div>
+  </div>
+
+</div>
+
+<div class="pf-toast" id="pfToast"></div>
+
+<script>
+var API = (function(){
+  var o = window.location.origin;
+  if (!o || o === 'null' || o.startsWith('file')) return 'http://localhost:3000/api';
+  return o + '/api';
+})();
+var _authToken = localStorage.getItem('apexel_token') || sessionStorage.getItem('apexel_token') || '';
+var _authUser = null;
+var _profileData = null;
+
+function getUsername() {
+  return new URLSearchParams(window.location.search).get('u') || '';
+}
+
+async function init() {
+  // Auth
+  if (_authToken) {
+    try {
+      var r = await fetch(API + '/auth/me', { headers: { Authorization: 'Bearer ' + _authToken } });
+      if (r.ok) _authUser = await r.json();
+    } catch(e) {}
+  }
+
+  var uname = getUsername();
+  if (!uname) { showError('No user specified'); return; }
+
+  try {
+    var r = await fetch(API + '/users/' + encodeURIComponent(uname) + '/profile');
+    if (!r.ok) { showError('User not found'); return; }
+    _profileData = await r.json();
+    renderProfile(_profileData);
+  } catch(e) {
+    showError('Failed to load profile');
+  }
+}
+
+function renderProfile(data) {
+  var user = data.user;
+  document.title = 'APEXEL · ' + user.username;
+
+  // Avatar
+  var avatarEl = document.getElementById('pfAvatar');
+  if (user.avatar) {
+    avatarEl.innerHTML = '<img src="' + user.avatar + '" alt="">';
+  } else {
+    avatarEl.textContent = user.username[0].toUpperCase();
+  }
+
+  // Show edit button only for own profile
+  var isOwn = _authUser && _authUser.username === user.username;
+  if (isOwn) document.getElementById('pfAvatarEdit').style.display = 'flex';
+
+  // Info
+  document.getElementById('pfUsername').textContent = user.username;
+  var roleBadge = document.getElementById('pfRoleBadge');
+  roleBadge.textContent = user.role;
+  roleBadge.className = 'pf-role-badge ' + user.role;
+
+  if (user.created_at) {
+    var d = new Date(user.created_at * 1000);
+    document.getElementById('pfJoined').textContent = 'Joined ' + d.toLocaleDateString('en-US', { month:'long', year:'numeric' });
+  }
+
+  // Stats
+  var totalLikes = (data.builds || []).reduce(function(a, b) { return a + (b.likes || 0); }, 0);
+  document.getElementById('pfStatBuilds').textContent = (data.builds || []).length;
+  document.getElementById('pfStatVinyls').textContent = (data.vinyls || []).length;
+  document.getElementById('pfStatGuides').textContent = (data.guides || []).length;
+  document.getElementById('pfStatLikes').textContent = totalLikes;
+
+  // Tab counts
+  document.getElementById('tabCntBuilds').textContent = (data.builds || []).length;
+  document.getElementById('tabCntVinyls').textContent = (data.vinyls || []).length;
+  document.getElementById('tabCntGuides').textContent = (data.guides || []).length;
+
+  // Builds
+  renderBuilds(data.builds || []);
+  renderVinyls(data.vinyls || []);
+  renderGuides(data.guides || []);
+
+  // Show
+  document.getElementById('pfLoader').style.display = 'none';
+  document.getElementById('pfWrap').classList.add('show');
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function ist(cls, val) {
+  var icons = { spd:'<svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>', acc:'<svg viewBox="0 0 24 24"><polyline points="23,6 13.5,15.5 8.5,10.5 1,18"/></svg>', hdl:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>' };
+  return '<span class="is ' + cls + '">' + icons[cls] + '+' + val + '</span>';
+}
+
+function renderBuilds(builds) {
+  var container = document.getElementById('buildsList');
+  document.getElementById('emptyBuilds').style.display = builds.length ? 'none' : '';
+  if (!builds.length) return;
+  var html = '';
+  builds.forEach(function(b) {
+    var parts = b.parts || {};
+    var s=0,a=0,h=0;
+    Object.values(parts).forEach(function(p){if(p){s+=p.spd;a+=p.acc;h+=p.hdl;}});
+    var carLabel = [(b.car_maker||''), (b.car_name||'')].filter(Boolean).join(' ');
+    html += '<div class="pf-build-row">' +
+      '<div class="pf-cls-badge">' + esc(b.car_cls||'?') + '</div>' +
+      '<div style="flex:1;min-width:0">' +
+        '<div class="pf-build-name">' + esc(b.name||'Untitled') + '</div>' +
+        '<div class="pf-build-car">' + esc(carLabel) + '</div>' +
+      '</div>' +
+      '<div class="pf-build-stats">' + ist('spd',s) + ist('acc',a) + ist('hdl',h) + '</div>' +
+      '<div class="pf-likes"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' + (b.likes||0) + '</div>' +
+    '</div>';
+  });
+  container.innerHTML = html;
+}
+
+function renderVinyls(vinyls) {
+  var container = document.getElementById('vinylsList');
+  document.getElementById('emptyVinyls').style.display = vinyls.length ? 'none' : '';
+  if (!vinyls.length) return;
+  var html = '';
+  vinyls.forEach(function(v) {
+    var carLabel = [(v.car_maker||''), (v.car_name||'')].filter(Boolean).join(' ');
+    html += '<div class="pf-vinyl-row">';
+    if (v.image) {
+      html += '<img class="pf-vinyl-thumb" src="' + esc(v.image) + '" alt="">';
+    } else {
+      html += '<div class="pf-vinyl-thumb" style="display:flex;align-items:center;justify-content:center"><svg style="width:16px;height:16px;stroke:var(--mu);fill:none;stroke-width:1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg></div>';
+    }
+    html += '<div style="flex:1;min-width:0"><div class="pf-vinyl-name">' + esc(v.name||'Untitled') + '</div>' +
+      '<div class="pf-vinyl-car">' + esc(carLabel) + '</div></div>' +
+      '<div class="pf-likes"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' + (v.likes||0) + '</div>' +
+    '</div>';
+  });
+  container.innerHTML = html;
+}
+
+function renderGuides(guides) {
+  var container = document.getElementById('guidesList');
+  document.getElementById('emptyGuides').style.display = guides.length ? 'none' : '';
+  if (!guides.length) return;
+  var html = '';
+  guides.forEach(function(g) {
+    var date = g.created_at ? new Date(g.created_at*1000).toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'}) : '';
+    html += '<a class="pf-guide-row" href="guide-view.html?id=' + esc(g.id) + '" target="_blank">' +
+      '<div class="pf-guide-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg></div>' +
+      '<div class="pf-guide-title">' + esc(g.title||'Untitled') + '</div>' +
+      '<div class="pf-guide-meta"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>' + (g.views||0) + ' · ' + date + '</div>' +
+    '</a>';
+  });
+  container.innerHTML = html;
+}
+
+// ── TABS ──────────────────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.pf-tab').forEach(function(b){ b.classList.remove('active'); });
+  document.querySelectorAll('.pf-panel').forEach(function(p){ p.classList.remove('active'); });
+  btn.classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
+}
+
+// ── AVATAR UPLOAD ─────────────────────────────────────────────
+function uploadAvatar(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) { showToast('Image too large (max 2MB)'); return; }
+  var reader = new FileReader();
+  reader.onload = async function(e) {
+    var data = e.target.result;
+    try {
+      var r = await fetch(API + '/users/me/avatar', {
+        method: 'PATCH',
+        headers: { 'Content-Type':'application/json', 'Authorization':'Bearer ' + _authToken },
+        body: JSON.stringify({ avatar: data })
+      });
+      if (r.ok) {
+        var avatarEl = document.getElementById('pfAvatar');
+        avatarEl.innerHTML = '<img src="' + data + '" alt="">';
+        showToast('Avatar updated');
+      } else {
+        var err = await r.json();
+        showToast('Error: ' + (err.error || 'failed'));
+      }
+    } catch(e) { showToast('Network error'); }
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── TOAST ─────────────────────────────────────────────────────
+var _toastT = null;
+function showToast(msg) {
+  var el = document.getElementById('pfToast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(_toastT);
+  _toastT = setTimeout(function(){ el.classList.remove('show'); }, 3000);
+}
+function showError(msg) {
+  document.getElementById('pfLoader').innerHTML = '<div style="color:var(--mu);font-family:\'Barlow Condensed\',sans-serif;font-size:.78rem;letter-spacing:.18em;text-transform:uppercase">' + msg + '</div>';
+}
+
+init();
+</script>
+</body>
+</html>
