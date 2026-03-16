@@ -193,6 +193,14 @@ CREATE TABLE IF NOT EXISTS support_messages (
   try { db.exec("ALTER TABLE builds ADD COLUMN recommended_by TEXT DEFAULT ''"); } catch {}
   try { db.exec("ALTER TABLE builds ADD COLUMN tags TEXT DEFAULT ''"); } catch {}
   // Subscriptions: notify user when new build posted for a car or by an author
+  // User follows (profile subscriptions)
+  try { db.exec(`CREATE TABLE IF NOT EXISTS user_follows (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    follower_id INTEGER NOT NULL,
+    target_username TEXT NOT NULL COLLATE NOCASE,
+    created_at  INTEGER DEFAULT (unixepoch()),
+    UNIQUE(follower_id, target_username)
+  )`); } catch {}
   try { db.exec(`CREATE TABLE IF NOT EXISTS subscriptions (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     telegram_id INTEGER NOT NULL,
