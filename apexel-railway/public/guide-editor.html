@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEXEL · Guide Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700&family=Georgia&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:    #f8f6f1;
+    --tx:    #1a1a1a;
+    --mu:    #888;
+    --br:    #e0ddd6;
+    --ac:    #9bbf5f;
+    --ac2:   #7da348;
+    --red:   #c47c7c;
+    --s1:    #fff;
+    --hdr:   #f0ede6;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--tx);
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 18px;
+    line-height: 1.7;
+    min-height: 100vh;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  input, textarea, [contenteditable] {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  /* ── HEADER ──────────────────────────────────────────────────── */
+  .tph-header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 52px;
+    background: var(--hdr);
+    border-bottom: 1px solid var(--br);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    z-index: 100;
+  }
+
+  .tph-logo {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--tx);
+    opacity: .5;
+    transition: opacity .2s;
+  }
+  .tph-logo:hover { opacity: 1; }
+  .tph-logo span { color: var(--ac2); }
+
+  .tph-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .tph-btn {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: .78rem;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    padding: .45rem 1.1rem;
+    transition: all .15s;
+  }
+
+  .tph-btn-ghost {
+    background: none;
+    color: var(--mu);
+    border: 1px solid var(--br);
+  }
+  .tph-btn-ghost:hover { color: var(--tx); border-color: #bbb; }
+
+  .tph-btn-publish {
+    background: var(--tx);
+    color: #fff;
+  }
+  .tph-btn-publish:hover { background: #333; }
+  .tph-btn-publish:disabled { opacity: .35; cursor: not-allowed; }
+
+  /* ── MAIN LAYOUT ─────────────────────────────────────────────── */
+  .tph-wrap {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 80px 24px 120px;
+  }
+
+  /* ── TITLE ───────────────────────────────────────────────────── */
+  .tph-title {
+    width: 100%;
+    font-family: Georgia, serif;
+    font-size: 2.6rem;
+    font-weight: normal;
+    line-height: 1.2;
+    color: var(--tx);
+    border: none;
+    outline: none;
+    background: transparent;
+    resize: none;
+    overflow: hidden;
+    padding: 0;
+    margin-bottom: 6px;
+    display: block;
+    -webkit-user-select: text;
+    user-select: text;
+  }
+  .tph-title::placeholder { color: #ccc; }
+
+  .tph-author-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--br);
+  }
+
+  .tph-author-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: .72rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--mu);
+  }
+
+  .tph-author-val {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: .85rem;
+    letter-spacing: .06em;
+    color: var(--tx);
+    opacity: .6;
+  }
+
+  /* ── CONTENT BLOCKS ──────────────────────────────────────────── */
+  .tph-blocks { min-height: 200px; }
+
+  .tph-block {
+    position: relative;
+    margin-bottom: 2px;
+    group: 1;
+  }
+
+  .tph-block:hover .tph-block-handle { opacity: 1; }
+
+  .tph-block-handle {
+    position: absolute;
+    left: -40px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0;
+    transition: opacity .15s;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    cursor: grab;
+  }
+
+  .tph-handle-btn {
+    width: 28px;
+    height: 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--mu);
+    border-radius: 3px;
+    transition: all .12s;
+  }
+  .tph-handle-btn:hover { background: var(--br); color: var(--tx); }
+  .tph-handle-btn svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  /* Text block */
+  .tph-text-block {
+    width: 100%;
+    font-family: Georgia, serif;
+    font-size: 1rem;
+    line-height: 1.75;
+    color: var(--tx);
+    border: none;
+    outline: none;
+    background: transparent;
+    resize: none;
+    overflow: hidden;
+    padding: 6px 0;
+    min-height: 40px;
+    display: block;
+    -webkit-user-select: text;
+    user-select: text;
+  }
+  .tph-text-block::placeholder { color: #ccc; }
+
+  /* Heading block */
+  .tph-heading-block {
+    width: 100%;
+    font-family: Georgia, serif;
+    font-size: 1.55rem;
+    font-weight: bold;
+    line-height: 1.3;
+    color: var(--tx);
+    border: none;
+    outline: none;
+    background: transparent;
+    resize: none;
+    overflow: hidden;
+    padding: 10px 0 4px;
+    min-height: 48px;
+    display: block;
+    -webkit-user-select: text;
+    user-select: text;
+  }
+  .tph-heading-block::placeholder { color: #ccc; }
+
+  /* Subheading block */
+  .tph-subheading-block {
+    width: 100%;
+    font-family: Georgia, serif;
+    font-size: 1.15rem;
+    font-style: italic;
+    color: #555;
+    border: none;
+    outline: none;
+    background: transparent;
+    resize: none;
+    overflow: hidden;
+    padding: 4px 0;
+    min-height: 36px;
+    display: block;
+    -webkit-user-select: text;
+    user-select: text;
+  }
+  .tph-subheading-block::placeholder { color: #ccc; }
+
+  /* Quote block */
+  .tph-block-quote {
+    border-left: 3px solid var(--tx);
+    padding: 8px 0 8px 20px;
+    margin: 4px 0;
+  }
+  .tph-quote-text {
+    width: 100%;
+    font-family: Georgia, serif;
+    font-size: 1rem;
+    font-style: italic;
+    line-height: 1.7;
+    color: #444;
+    border: none;
+    outline: none;
+    background: transparent;
+    resize: none;
+    overflow: hidden;
+    padding: 0;
+    min-height: 36px;
+    display: block;
+    -webkit-user-select: text;
+    user-select: text;
+  }
+  .tph-quote-text::placeholder { color: #ccc; }
+
+  /* Image block */
+  .tph-img-block {
+    margin: 16px 0;
+    position: relative;
+  }
+
+  .tph-img-drop {
+    border: 1.5px dashed var(--br);
+    background: #f5f3ee;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 36px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    color: var(--mu);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: .78rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+  }
+  .tph-img-drop:hover { border-color: #aaa; background: #eeebe3; }
+  .tph-img-drop svg { width: 28px; height: 28px; stroke: var(--mu); fill: none; stroke-width: 1.5; }
+
+  .tph-img-preview {
+    width: 100%;
+    display: block;
+    max-height: 520px;
+    object-fit: contain;
+    background: #f0ede6;
+    cursor: pointer;
+  }
+
+  .tph-img-caption {
+    width: 100%;
+    font-family: Georgia, serif;
+    font-size: .82rem;
+    color: var(--mu);
+    text-align: center;
+    border: none;
+    outline: none;
+    background: transparent;
+    resize: none;
+    overflow: hidden;
+    padding: 6px 0 2px;
+    display: block;
+    -webkit-user-select: text;
+    user-select: text;
+  }
+  .tph-img-caption::placeholder { color: #ccc; font-style: italic; }
+
+  /* Divider block */
+  .tph-divider {
+    border: none;
+    border-top: 1px solid var(--br);
+    margin: 18px 0;
+    cursor: default;
+  }
+
+  /* ── ADD BLOCK TOOLBAR ───────────────────────────────────────── */
+  .tph-add-bar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 16px 0 8px;
+    flex-wrap: wrap;
+  }
+
+  .tph-add-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: .65rem;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--mu);
+    margin-right: 8px;
+  }
+
+  .tph-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: none;
+    border: 1px solid var(--br);
+    color: var(--mu);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: .7rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    padding: .3rem .7rem;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all .13s;
+  }
+  .tph-add-btn:hover { border-color: #999; color: var(--tx); background: var(--hdr); }
+  .tph-add-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; flex-shrink: 0; }
+
+  /* ── WORD COUNT ──────────────────────────────────────────────── */
+  .tph-status {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: .68rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--mu);
+    opacity: .6;
+  }
+
+  /* ── SAVED TOAST ─────────────────────────────────────────────── */
+  .tph-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--tx);
+    color: #fff;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: .78rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    padding: .6rem 1.4rem;
+    opacity: 0;
+    transition: opacity .25s, transform .25s;
+    pointer-events: none;
+    z-index: 999;
+  }
+  .tph-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── EMPTY STATE ─────────────────────────────────────────────── */
+  .tph-empty-hint {
+    color: #ccc;
+    font-family: Georgia, serif;
+    font-style: italic;
+    font-size: .95rem;
+    padding: 8px 0;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  /* ── PUBLISHED OVERLAY ───────────────────────────────────────── */
+  .tph-published {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 200;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    animation: fadeIn .3s ease;
+  }
+  .tph-published.show { display: flex; }
+  .tph-pub-icon { font-size: 2.5rem; }
+  .tph-pub-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: .3em;
+    text-transform: uppercase;
+  }
+  .tph-pub-sub {
+    font-family: Georgia, serif;
+    font-size: .9rem;
+    color: var(--mu);
+    text-align: center;
+    max-width: 320px;
+  }
+  .tph-pub-back {
+    margin-top: 8px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: .75rem;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    border: none;
+    background: var(--tx);
+    color: #fff;
+    padding: .6rem 1.4rem;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .tph-pub-back:hover { background: #333; }
+
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+  /* ── RESPONSIVE ──────────────────────────────────────────────── */
+  @media (max-width: 780px) {
+    .tph-block-handle { display: none; }
+    .tph-wrap { padding: 72px 20px 100px; }
+    .tph-title { font-size: 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="tph-header">
+  <a href="index.html" class="tph-logo">APEX<span>EL</span></a>
+  <div class="tph-header-actions">
+    <button class="tph-btn tph-btn-ghost" onclick="clearEditor()">Clear</button>
+    <button class="tph-btn tph-btn-publish" id="publishBtn" onclick="publishGuide()">Publish</button>
+  </div>
+</header>
+
+<!-- Editor -->
+<main class="tph-wrap">
+
+  <textarea class="tph-title" id="edTitle" placeholder="Title" rows="1"
+    oninput="autoResize(this);updateStatus()"></textarea>
+
+  <div class="tph-author-row">
+    <span class="tph-author-label">By</span>
+    <span class="tph-author-val" id="edAuthorLabel">—</span>
+  </div>
+
+  <div class="tph-blocks" id="edBlocks">
+    <div class="tph-empty-hint" id="edEmptyHint">Your story begins here…</div>
+  </div>
+
+  <!-- Add block toolbar -->
+  <div class="tph-add-bar">
+    <span class="tph-add-label">Add</span>
+    <button class="tph-add-btn" onclick="addBlock('text')">
+      <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg>Text
+    </button>
+    <button class="tph-add-btn" onclick="addBlock('heading')">
+      <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h14"/></svg>Heading
+    </button>
+    <button class="tph-add-btn" onclick="addBlock('subheading')">
+      <svg viewBox="0 0 24 24"><path d="M4 8h12M4 14h8M4 20h16"/></svg>Subheading
+    </button>
+    <button class="tph-add-btn" onclick="addBlock('quote')">
+      <svg viewBox="0 0 24 24"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/></svg>Quote
+    </button>
+    <button class="tph-add-btn" onclick="addBlock('image')">
+      <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" stroke="none"/><path d="M21 15l-5-5L6 21"/></svg>Image
+    </button>
+    <button class="tph-add-btn" onclick="addBlock('divider')">
+      <svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/></svg>Divider
+    </button>
+  </div>
+
+</main>
+
+<!-- Status -->
+<div class="tph-status" id="edStatus">0 words</div>
+
+<!-- Toast -->
+<div class="tph-toast" id="edToast"></div>
+
+<!-- Published overlay -->
+<div class="tph-published" id="pubOverlay">
+  <div class="tph-pub-icon">✓</div>
+  <div class="tph-pub-title">Published</div>
+  <div class="tph-pub-sub" id="pubOverlaySub">Your guide has been published to the APEXEL community.</div>
+  <button class="tph-pub-back" onclick="goBack()">← Back to APEXEL</button>
+</div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────
+var API = (function(){
+  var o = window.location.origin;
+  if (!o || o === 'null' || o.startsWith('file')) return 'http://localhost:3000/api';
+  return o + '/api';
+})();
+
+var _authToken = localStorage.getItem('apexel_token') || sessionStorage.getItem('apexel_token') || '';
+var _authUser  = null;
+
+// ── BLOCKS STATE ──────────────────────────────────────────────────
+var _blocks = []; // [{id, type, content, caption}]
+var _blockId = 0;
+function nextId() { return 'b' + (++_blockId); }
+
+// ── AUTH ──────────────────────────────────────────────────────────
+async function initAuth() {
+  if (!_authToken) { showToast('Please log in to APEXEL first'); disablePublish(); return; }
+  try {
+    var r = await fetch(API + '/auth/me', { headers: { 'Authorization': 'Bearer ' + _authToken } });
+    var d = await r.json();
+    if (r.ok) {
+      _authUser = d;
+      document.getElementById('edAuthorLabel').textContent = d.username;
+    } else {
+      showToast('Session expired — please log in again');
+      disablePublish();
+    }
+  } catch(e) { /* offline */ }
+}
+
+function disablePublish() {
+  document.getElementById('publishBtn').disabled = true;
+}
+
+// ── AUTO RESIZE TEXTAREA ──────────────────────────────────────────
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+// ── RENDER BLOCKS ─────────────────────────────────────────────────
+function renderBlocks() {
+  var container = document.getElementById('edBlocks');
+  var hint = document.getElementById('edEmptyHint');
+  if (hint) hint.style.display = _blocks.length ? 'none' : '';
+
+  // Remove existing block nodes (keep hint)
+  Array.from(container.children).forEach(function(c) {
+    if (!c.id || c.id !== 'edEmptyHint') container.removeChild(c);
+  });
+
+  _blocks.forEach(function(block, idx) {
+    var div = document.createElement('div');
+    div.className = 'tph-block';
+    div.dataset.id = block.id;
+
+    // Handle bar
+    var handleHtml = '<div class="tph-block-handle">' +
+      (idx > 0 ? '<button class="tph-handle-btn" onclick="moveBlock(\''+block.id+'\', -1)" title="Move up"><svg viewBox="0 0 24 24"><polyline points="18,15 12,9 6,15"/></svg></button>' : '') +
+      (idx < _blocks.length-1 ? '<button class="tph-handle-btn" onclick="moveBlock(\''+block.id+'\', 1)" title="Move down"><svg viewBox="0 0 24 24"><polyline points="6,9 12,15 18,9"/></svg></button>' : '') +
+      '<button class="tph-handle-btn" onclick="removeBlock(\''+block.id+'\')" title="Delete" style="color:var(--red)"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>' +
+    '</div>';
+
+    var contentHtml = '';
+
+    if (block.type === 'text') {
+      contentHtml = '<textarea class="tph-text-block" data-id="'+block.id+'" placeholder="Start writing…" oninput="syncBlock(this);autoResize(this);updateStatus()" onfocus="setActive(\''+block.id+'\')" onkeydown="handleBlockKey(event,\''+block.id+'\')" rows="1">'+escAttr(block.content||'')+'</textarea>';
+    } else if (block.type === 'heading') {
+      contentHtml = '<textarea class="tph-heading-block" data-id="'+block.id+'" placeholder="Heading" oninput="syncBlock(this);autoResize(this);updateStatus()" onfocus="setActive(\''+block.id+'\')" rows="1">'+escAttr(block.content||'')+'</textarea>';
+    } else if (block.type === 'subheading') {
+      contentHtml = '<textarea class="tph-subheading-block" data-id="'+block.id+'" placeholder="Subheading" oninput="syncBlock(this);autoResize(this);updateStatus()" onfocus="setActive(\''+block.id+'\')" rows="1">'+escAttr(block.content||'')+'</textarea>';
+    } else if (block.type === 'quote') {
+      contentHtml = '<div class="tph-block-quote"><textarea class="tph-quote-text" data-id="'+block.id+'" placeholder="Quote text…" oninput="syncBlock(this);autoResize(this);updateStatus()" onfocus="setActive(\''+block.id+'\')" rows="1">'+escAttr(block.content||'')+'</textarea></div>';
+    } else if (block.type === 'image') {
+      if (block.content) {
+        contentHtml = '<div class="tph-img-block">' +
+          '<img class="tph-img-preview" src="'+block.content+'" alt="" onclick="document.getElementById(\'file_'+block.id+'\').click()">' +
+          '<input type="file" id="file_'+block.id+'" accept="image/*" style="display:none" onchange="handleImageUpload(\''+block.id+'\', event)">' +
+          '<textarea class="tph-img-caption" data-id="'+block.id+'" data-field="caption" placeholder="Add a caption (optional)" oninput="syncCaption(this);autoResize(this)" rows="1">'+escAttr(block.caption||'')+'</textarea>' +
+        '</div>';
+      } else {
+        contentHtml = '<div class="tph-img-block">' +
+          '<div class="tph-img-drop" onclick="document.getElementById(\'file_'+block.id+'\').click()">' +
+            '<svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" stroke="none"/><path d="M21 15l-5-5L6 21"/></svg>' +
+            'Click to upload image' +
+          '</div>' +
+          '<input type="file" id="file_'+block.id+'" accept="image/*" style="display:none" onchange="handleImageUpload(\''+block.id+'\', event)">' +
+        '</div>';
+      }
+    } else if (block.type === 'divider') {
+      contentHtml = '<hr class="tph-divider">';
+    }
+
+    div.innerHTML = handleHtml + contentHtml;
+    container.appendChild(div);
+
+    // Auto-resize all textareas
+    div.querySelectorAll('textarea').forEach(function(ta) { autoResize(ta); });
+  });
+}
+
+// ── BLOCK OPERATIONS ──────────────────────────────────────────────
+function addBlock(type, afterId) {
+  var block = { id: nextId(), type: type, content: '', caption: '' };
+  if (afterId) {
+    var idx = _blocks.findIndex(function(b){ return b.id === afterId; });
+    _blocks.splice(idx + 1, 0, block);
+  } else {
+    _blocks.push(block);
+  }
+  renderBlocks();
+  // Focus new block
+  setTimeout(function() {
+    var newEl = document.querySelector('[data-id="'+block.id+'"]');
+    if (newEl && newEl.focus) newEl.focus();
+  }, 20);
+  updateStatus();
+}
+
+function removeBlock(id) {
+  _blocks = _blocks.filter(function(b){ return b.id !== id; });
+  renderBlocks();
+  updateStatus();
+}
+
+function moveBlock(id, dir) {
+  var idx = _blocks.findIndex(function(b){ return b.id === id; });
+  var newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= _blocks.length) return;
+  var tmp = _blocks[idx]; _blocks[idx] = _blocks[newIdx]; _blocks[newIdx] = tmp;
+  renderBlocks();
+}
+
+function syncBlock(el) {
+  var id = el.dataset.id;
+  var block = _blocks.find(function(b){ return b.id === id; });
+  if (block) block.content = el.value;
+}
+
+function syncCaption(el) {
+  var id = el.dataset.id;
+  var block = _blocks.find(function(b){ return b.id === id; });
+  if (block) block.caption = el.value;
+}
+
+function setActive(id) { /* for future toolbar */ }
+
+function handleBlockKey(e, id) {
+  // Enter on empty text block = add new text block after
+  if (e.key === 'Enter' && !e.shiftKey) {
+    var block = _blocks.find(function(b){ return b.id === id; });
+    if (block && block.type === 'text' && e.target.value === '') {
+      e.preventDefault();
+      addBlock('text', id);
+    }
+  }
+  // Backspace on empty text block = remove it
+  if (e.key === 'Backspace') {
+    var block = _blocks.find(function(b){ return b.id === id; });
+    if (block && block.type === 'text' && e.target.value === '' && _blocks.length > 1) {
+      e.preventDefault();
+      var idx = _blocks.findIndex(function(b){ return b.id === id; });
+      removeBlock(id);
+      // Focus previous block
+      setTimeout(function() {
+        var prev = _blocks[Math.max(0, idx-1)];
+        if (prev) {
+          var el = document.querySelector('[data-id="'+prev.id+'"]');
+          if (el) { el.focus(); el.selectionStart = el.value.length; }
+        }
+      }, 20);
+    }
+  }
+}
+
+function handleImageUpload(blockId, event) {
+  var file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { showToast('Image too large (max 5 MB)'); return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var block = _blocks.find(function(b){ return b.id === blockId; });
+    if (block) { block.content = e.target.result; renderBlocks(); }
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── STATUS ────────────────────────────────────────────────────────
+function updateStatus() {
+  var words = _blocks.reduce(function(acc, b) {
+    return acc + (b.content || '').trim().split(/\s+/).filter(Boolean).length;
+  }, 0);
+  var title = (document.getElementById('edTitle').value || '').trim().split(/\s+/).filter(Boolean).length;
+  document.getElementById('edStatus').textContent = (words + title) + ' words';
+}
+
+// ── CLEAR ─────────────────────────────────────────────────────────
+function clearEditor() {
+  if (_blocks.length === 0 && !document.getElementById('edTitle').value) return;
+  if (!confirm('Clear everything and start over?')) return;
+  _blocks = [];
+  document.getElementById('edTitle').value = '';
+  autoResize(document.getElementById('edTitle'));
+  renderBlocks();
+  updateStatus();
+}
+
+// ── PUBLISH ───────────────────────────────────────────────────────
+async function publishGuide() {
+  if (!_authUser) { showToast('Please log in to APEXEL first'); return; }
+  var title = document.getElementById('edTitle').value.trim();
+  if (!title) { showToast('Please add a title'); document.getElementById('edTitle').focus(); return; }
+  var validBlocks = _blocks.filter(function(b) {
+    if (b.type === 'divider') return true;
+    return (b.content || '').trim().length > 0;
+  });
+  if (validBlocks.length === 0) { showToast('Please add some content'); return; }
+
+  var btn = document.getElementById('publishBtn');
+  btn.disabled = true; btn.textContent = 'Publishing…';
+
+  var blocksToSave = validBlocks.map(function(b) {
+    return { type: b.type, content: b.content || '', caption: b.caption || '' };
+  });
+
+  try {
+    var r = await fetch(API + '/guides', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _authToken },
+      body: JSON.stringify({ title: title, author: _authUser.username, blocks: blocksToSave })
+    });
+    var d = await r.json();
+    if (r.ok) {
+      document.getElementById('pubOverlaySub').textContent = '"' + title + '" has been published to the APEXEL community.';
+      document.getElementById('pubOverlay').classList.add('show');
+    } else {
+      showToast('Error: ' + (d.error || 'server error'));
+      btn.disabled = false; btn.textContent = 'Publish';
+    }
+  } catch(e) {
+    showToast('Network error — check connection');
+    btn.disabled = false; btn.textContent = 'Publish';
+  }
+}
+
+function goBack() {
+  window.location.href = 'index.html';
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────
+var _toastTimer = null;
+function showToast(msg) {
+  var el = document.getElementById('edToast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 3000);
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────
+function escAttr(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────
+initAuth();
+renderBlocks();
+
+// Check for draft in URL params (future)
+document.getElementById('edTitle').addEventListener('input', function() {
+  autoResize(this); updateStatus();
+});
+</script>
+</body>
+</html>
