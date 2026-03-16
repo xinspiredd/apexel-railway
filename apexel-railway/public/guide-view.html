@@ -198,6 +198,20 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 .gv-cmt-text {
   font-size: .9rem; color: var(--mu); line-height: 1.6;
 }
+.gv-cmt-delete {
+  background: none;
+  border: none;
+  color: rgba(196,124,124,.35);
+  cursor: pointer;
+  font-size: .95rem;
+  line-height: 1;
+  padding: .1rem .3rem;
+  border-radius: 3px;
+  transition: color .15s, background .15s;
+  margin-left: auto;
+}
+.gv-cmt-delete:hover { color: #c47c7c; background: rgba(196,124,124,.1); }
+.gv-cmt-header { display: flex; align-items: center; gap: .4rem; margin-bottom: .25rem; }
 .gv-no-comments {
   font-family: 'Barlow Condensed', sans-serif;
   font-size: .78rem; letter-spacing: .14em;
@@ -389,8 +403,14 @@ function renderComments(comments) {
     html = '<div class="gv-no-comments">No comments yet — be first!</div>';
   } else {
     comments.forEach(function(c) {
-      html += '<div class="gv-comment"><div class="gv-cmt-author">' + esc(c.author || 'Anonymous') + '</div>' +
-        '<div class="gv-cmt-text">' + esc(c.text || '') + '</div></div>';
+      var isOwn = _authUser && (c.author === _authUser.username || _authUser.role === 'admin');
+      var delBtn = (isOwn && c.id)
+        ? '<button class="gv-cmt-delete" onclick="deleteComment(\'' + c.id + '\',this)" title="Delete">×</button>'
+        : '';
+      html += '<div class="gv-comment" data-cmt-id="' + (c.id||'') + '">' +
+        '<div class="gv-cmt-header"><span class="gv-cmt-author">' + esc(c.author || 'Anonymous') + '</span>' + delBtn + '</div>' +
+        '<div class="gv-cmt-text">' + esc(c.text || '') + '</div>' +
+        '</div>';
     });
   }
   document.getElementById('gvCmtList').innerHTML = html;
@@ -409,6 +429,24 @@ function renderCommentForm() {
       '<svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>' +
     '</button>' +
     '</div>';
+}
+
+async function deleteComment(commentId, btn) {
+  if (!confirm('Delete this comment?')) return;
+  try {
+    var r = await fetch(API + '/comments/' + commentId, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + _authToken }
+    });
+    if (r.ok) {
+      var el = btn.closest('.gv-comment');
+      if (el) {
+        el.style.opacity = '0';
+        el.style.transition = 'opacity .2s';
+        setTimeout(function(){ el.remove(); var cnt = document.getElementById('gvCmtCount'); if(cnt) cnt.textContent = Math.max(0, parseInt(cnt.textContent||0)-1); }, 200);
+      }
+    }
+  } catch(e) {}
 }
 
 async function submitComment() {
